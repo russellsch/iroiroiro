@@ -31,7 +31,7 @@ The prose uses ASD-STE100 Issue 9. The requirement structure uses the published 
 | N-01 | The user wants a fast way to identify open workspaces by color. | U-01, U-04 |
 | N-02 | The user wants the same saved color when a workspace opens again. | U-02, U-06 |
 | N-03 | The user wants optional automatic assignment for an uncolored workspace. | U-03 |
-| N-04 | The user wants common color presets and reusable named custom colors. | U-09 and the initial examples |
+| N-04 | The user wants more than 200 built-in colors with clear English names and reusable named custom colors. | U-09, U-15 |
 | N-05 | The user wants solid hex input, including short hex codes. | U-09, U-14 |
 | N-06 | The user wants keyboard commands for color selection and shade adjustment. | U-11 |
 | N-07 | The user wants a choice of colored window parts. | U-07, U-12 |
@@ -41,7 +41,7 @@ The prose uses ASD-STE100 Issue 9. The requirement structure uses the published 
 | N-11 | The user wants recovery from extension appearance changes. | Derived from N-02, N-10 and design D-08 through D-10 |
 | N-12 | The project wants clear, traceable, verifiable requirements. | U-13 |
 
-U-01 through U-14 are the user decisions in [Design Section 2](design.md#2-scope-and-decisions). D-01 through D-12 are engineering decisions in that section.
+U-01 through U-15 are the user decisions in [Design Section 2](design.md#2-scope-and-decisions). D-01 through D-12 are engineering decisions in that section.
 
 ## 3. Terminology register
 
@@ -251,9 +251,9 @@ The following tables continue the stable order of Catalog P. The reading order i
 | Dark cornflower blue | `#14346b` | Pale royal blue | `#c5d1f7` |
 | Light royal blue | `#708feb` | Royal blue | `#2050df` |
 | Deep royal blue | `#1739a1` | Dark royal blue | `#0f2567` |
-| Pale navy blue | `#c1c5f0` | Light navy blue | `#6a74dc` |
-| Navy blue | `#2a35b2` | Deep navy blue | `#1d257c` |
-| Dark navy blue | `#11164a` | Pale steel blue | `#ccddea` |
+| Pale navy blue | `#d5dced` | Light navy blue | `#8a9abd` |
+| Navy blue | `#34466f` | Deep navy blue | `#22345c` |
+| Dark navy blue | `#111d38` | Pale steel blue | `#ccddea` |
 | Light steel blue | `#8bb1d0` | Steel blue | `#4780ae` |
 | Deep steel blue | `#325a7b` | Dark steel blue | `#213a50` |
 
