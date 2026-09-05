@@ -8,3 +8,6 @@ These draft documents define the first release:
 - [Requirements](docs/requirements.md)
 
 The documents use ASD-STE100 Issue 9 and INCOSE requirement guidance.
+
+Implementation will add the [installation and user documents](docs/requirements.md#46-catalog-d-implementation-documents) required for release.
+The primary install path will use a VSIX from GitHub Releases. A source build path will also be documented.

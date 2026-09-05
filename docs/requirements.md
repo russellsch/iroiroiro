@@ -3,7 +3,7 @@
 | Item | Value |
 | --- | --- |
 | Document ID | IRO-REQ-001 |
-| Revision | 0.1 |
+| Revision | 0.2 |
 | Date | 2026-09-05 |
 | Status | Draft for review |
 | Product | iroiro iro (色々色) |
@@ -20,7 +20,7 @@ All numbered requirements have release priority P1, which means necessary for Re
 
 Each source points to a stakeholder need or an engineering decision. The need table identifies the originating user decisions. The design contains the full decision register.
 
-Catalogs P, S, and C, Profile T, and Matrix E form part of this specification. They define the sets and measurement conditions used by the requirements.
+Catalogs P, S, C, and D, Profile T, Matrix E, and Contract B form part of this specification. They define reference data, delivery content, build commands, and verification conditions.
 
 The prose uses ASD-STE100 Issue 9. The requirement structure uses the published INCOSE Guide to Writing Requirements V4 summary. The terminology register defines the software terms used in this document.
 
@@ -40,8 +40,12 @@ The prose uses ASD-STE100 Issue 9. The requirement structure uses the published 
 | N-10 | The user wants a color preview that Escape can cancel. | U-14 |
 | N-11 | The user wants recovery from extension appearance changes. | Derived from N-02, N-10 and design D-08 through D-10 |
 | N-12 | The project wants clear, traceable, verifiable requirements. | U-13 |
+| N-13 | The user wants local color use without third-party runtime packages or additional installed tools. | U-16 |
+| N-14 | The user wants a small, reviewed, locked set of build tools. | U-17 |
+| N-15 | The user wants GitHub VSIX installation and a documented source build path. | U-18 |
+| N-16 | The user wants implementation documents for installation, use, recovery, and maintenance. | U-13, U-19 |
 
-U-01 through U-15 are the user decisions in [Design Section 2](design.md#2-scope-and-decisions). D-01 through D-12 are engineering decisions in that section.
+U-01 through U-19 are the user decisions in [Design Section 2](design.md#2-scope-and-decisions). D-01 through D-16 are engineering decisions in that section.
 
 ## 3. Terminology register
 
@@ -56,8 +60,12 @@ These terms use the computer science, mathematical, color, or specification cont
 | appearance operation | One completed color change, part selection, Undo, or Reset. |
 | automatic assignment | Initial color selection without a color picker. |
 | baseline | Recorded settings values before the extension first owns their paths. |
+| build tool | Development program used to check, compile, test, or package the extension. |
 | canonical hex | Lowercase solid color text in the form `#rrggbb`. |
+| checksum | Calculated value used to compare a file with an identified release asset. |
+| CLI | Command-line interface for a program. |
 | color key | VS Code identifier for one workbench color. |
+| CommonJS | JavaScript module format used for emitted extension code. |
 | Command Center | Search control in the VS Code title bar. |
 | Command Palette | VS Code control that lists available commands. |
 | committed color | Primary color from a completed appearance operation. |
@@ -65,17 +73,25 @@ These terms use the computer science, mathematical, color, or specification cont
 | coordination directory | Local extension storage directory that contains window records. |
 | custom preset | User-added name and solid color value. |
 | debounce interval | Delay that replaces pending input with the latest input. |
+| dependency tree | Direct and transitive packages selected for the build tools. |
+| direct dependency | Package explicitly listed in the project manifest. |
 | extension API | Public interface through which an extension uses VS Code services. |
 | external edit | Configuration change outside the current extension operation. |
 | foreground | Text or icon color drawn on a background. |
 | Git worktree | Separate working directory for a Git repository checkout. |
+| GitHub Release | Repository release page with a source tag, release notes, and downloadable assets. |
 | heartbeat | Periodic update that keeps a window record current. |
 | hex code | Base-16 representation of red, green, and blue channels. |
 | HSL | Hue, saturation, and lightness color model. |
 | Input Box | Native VS Code control for text input. |
 | journal | Record that supports recovery from an interrupted operation. |
 | JSON | JavaScript Object Notation data format. |
+| lifecycle script | Package script that a package manager can run during dependency installation. |
+| lockfile | File that records exact dependency versions, sources, and integrity values. |
+| LTS | Long-term support status of a software release. |
+| manifest | Project `package.json` data that identifies the extension and its contributions. |
 | no-op | Operation whose intended state equals the current state. |
+| npm | Package manager used to install the approved build tools and run project scripts. |
 | OKLab | Perceptual color space used for the color difference calculation. |
 | owned pair | Foreground and background values that the extension calculates together. |
 | owned path | Color setting path whose prior and written values the extension records. |
@@ -87,6 +103,7 @@ These terms use the computer science, mathematical, color, or specification cont
 | primary color | Saved workspace color from which the extension calculates shades. |
 | profile | VS Code collection of user settings and extension state. |
 | rationale | Requirement attribute that gives the basis for an obligation. |
+| release asset | File attached to a GitHub Release. |
 | Quick Pick | Native VS Code control for selection from a list. |
 | readback | Configuration read that verifies an attempted write. |
 | recovery | Restoration after an interrupted or failed appearance operation. |
@@ -94,6 +111,7 @@ These terms use the computer science, mathematical, color, or specification cont
 | Restricted Mode | VS Code mode for a workspace that the user has not trusted. |
 | RGB and sRGB | Red, green, and blue channels, and the standard RGB color space. |
 | rollback | Conditional restoration of values from an operation snapshot. |
+| runtime package | Package whose code executes as part of the installed extension. |
 | sash | Draggable divider between VS Code regions. |
 | schema | Definition of permitted data fields and their types. |
 | Settings Sync | VS Code service for synchronization of user preferences. |
@@ -101,7 +119,9 @@ These terms use the computer science, mathematical, color, or specification cont
 | snapshot | Recorded appearance state at an operation boundary. |
 | surface registry | Fixed mapping from part IDs to supported color keys. |
 | telemetry | Product usage or diagnostic data sent to an external service. |
+| third-party package | Software package maintained outside this project and supplied outside the VS Code or Node.js host. |
 | theme selector | Key that groups color overrides for named VS Code themes. |
+| transitive dependency | Package that a direct or transitive dependency needs. |
 | UI | User interface. |
 | Unicode code point | One numbered Unicode character value. |
 | URI | Uniform Resource Identifier. |
@@ -131,6 +151,7 @@ The documents use the following verbs only for the stated software or mathematic
 | synchronize, update, debug | Computer system operations. |
 | run, call, return, assign | Program execution and configuration value assignment. |
 | convert, round, hash | Color mathematics and identifier calculation. |
+| compile, build, package, install, emit | Program translation and extension package preparation or installation. |
 | exclude | Set selection that removes specified members before use. |
 | verify, trace | Comparison against a specification and requirement relationships. |
 
@@ -404,6 +425,27 @@ The minimum host version is VS Code 1.104.0. The second host version is the curr
 
 Browser clients, empty windows, and VS Code forks are outside the environment matrix. Experimental Modern UI is outside visual support until its affected color tokens pass direct verification.
 
+### 4.6 Catalog D: Implementation documents
+
+Implementation supplies the following files. The Package column identifies files included in the VSIX. These paths identify documents that implementation creates or updates.
+
+| Document | Path | Required content | Package |
+| --- | --- | --- | --- |
+| Readme | `README.md` | Purpose, supported VS Code versions, GitHub VSIX installation first, quick start, and guide links. Actual repository and release links. | Yes |
+| Installation guide | `docs/install.md` | GitHub asset selection, graphical installation, optional CLI installation, and verification. Source tag checkout, locked tool setup, package creation, and installation. Windows, macOS, Linux, and local UI placement for remote sessions. Offline use, manual updates, version checks, and removal. | Yes |
+| User guide | `docs/user-guide.md` | All Catalog C commands, examples, preview cancellation, persistence, presets, automatic assignment, random color limits, colored parts, Undo, and Reset. A generated preset reference that matches Catalog P. | Yes |
+| Settings reference | `docs/settings.md` | Each setting key, type, default, scope, accepted values, and invalid-value behavior. Valid JSON examples for short hex, custom presets, automatic coloring, and selected parts. Workspace file changes and Git visibility. | Yes |
+| Troubleshooting guide | `docs/troubleshooting.md` | Empty windows, unsupported hosts, hidden parts, theme conflicts, read-only settings, failed recovery, invalid configuration, installation failures, and remote placement. Log access and an issue-report template. Manual color removal specified in RES-012. | Yes |
+| Contributor guide | `CONTRIBUTING.md` | Exact build prerequisites, source commands, project structure, unit tests, integration tests, dependency review, package creation, and release preparation. Documentation checks and requirement verification records. | No |
+| Changelog | `CHANGELOG.md` | Version and date for each release. User-visible changes, fixes, compatibility changes, known limitations, and links to release records. | Yes |
+| Build-tool record | `docs/build-tools.md` | Approved direct tools, purpose, exact versions, and Node.js/npm versions. Full-tree review, package counts, source and integrity checks, advisories, dispositions, review date, and lockfile hash. | No |
+| Release record | `docs/releases/<version>.md` | Source tag and commit, package identity, VSIX checksum, tool versions, supported hosts, requirement results, installation results, known limitations, and asset links. | No |
+| Design and requirements | `docs/design.md`, `docs/requirements.md` | Current behavior, decisions, interfaces, catalogs, stable requirement IDs, sources, rationales, and verification criteria. | No |
+
+Packaged instructions contain complete text and use local assets. Each instructional image has a text alternative. Planned behavior is identified as planned.
+
+The release record uses the actual release version in its filename. A release document contains actual repository and release links. A command that needs user input identifies the value and gives a working example.
+
 ## 5. Verification methods
 
 | Code | Method | Evidence |
@@ -602,6 +644,66 @@ Each row below contains a pass condition. The verification record identifies its
 | QUA-013 | The release package must install as a VSIX on the minimum supported VS Code host. | N-08, D-01 | Installable extension delivery. | T: A clean minimum-version profile installs the VSIX and discovers the catalog commands. |
 | QUA-014 | The release record must trace each requirement ID to a verification result. | N-12, U-13 | Reviewable evidence. | I: Each ID has a result, environment, date, and evidence location. |
 
+### 6.12 Dependencies
+
+| ID | Requirement | Source | Rationale | Verification and pass condition |
+| --- | --- | --- | --- | --- |
+| DEP-001 | The installed extension must contain no third-party runtime package. | N-13, U-16 | Small runtime dependency scope. | I: The manifest, import graph, and package contain no external, combined, or copied third-party runtime package. |
+| DEP-002 | Local color operations must use only programs supplied by VS Code and its host operating system. | N-13, U-16 | No separate runtime or command-line tool. | D: The command suite passes in a profile without additional Node.js, npm, Git, or build-tool installations. |
+| DEP-003 | The extension must declare no required companion extension. | N-13, U-16 | Independent local installation. | I, D: The manifest has no `extensionDependencies` or `extensionPack` entries. Local use passes with no other user extension enabled. |
+| DEP-004 | Project development dependencies must use only the approved direct tools in Contract B. | N-14, U-17 | Explicit tool scope. | I, T: The manifest and dependency check reject an additional direct package. |
+| DEP-005 | The lockfile must record the full build-tool dependency tree at exact versions. | N-14, U-17 | Review includes indirect packages. | I, T: Each selected direct, transitive, and optional package has its resolved version, source, and integrity value. |
+| DEP-006 | The documented dependency installation must disable package lifecycle scripts. | N-14, D-14 | Installation does not automatically execute dependency scripts. | I, T: Setup uses `npm ci --ignore-scripts`. An installation trace contains zero package lifecycle script executions. |
+| DEP-007 | The VSIX must contain all project code, preset data, and assets required for local color operations. | N-13, U-16 | Complete offline package. | I, T: Required runtime resources resolve in the package or host APIs. Offline command checks have no missing resource. |
+| DEP-008 | Each build-tool dependency change must have a recorded review of the resulting dependency tree. | N-14, U-17 | Review survives tool updates. | I: The build-tool record identifies the changed tree and matching lockfile hash before package code executes. |
+
+### 6.13 Build and package creation
+
+| ID | Requirement | Source | Rationale | Verification and pass condition |
+| --- | --- | --- | --- | --- |
+| BLD-001 | The repository must supply each command in Contract B. | N-14, N-15, D-14 | A defined source workflow. | I, T: Each command has its specified result and exit behavior from a clean source checkout. |
+| BLD-002 | Source compilation and packaging must use only the prerequisites in Contract B. | N-14, N-15, D-14 | No undocumented global tool. | T: The source flow passes on Windows, macOS, and Linux without a globally installed compiler, packager, or test framework. |
+| BLD-003 | TypeScript compilation must use the compiler constraints in Contract B. | N-14, D-13 | Checked source with no runtime helper package. | I, T: Compiler configuration matches the contract. A type error prevents new JavaScript output. |
+| BLD-004 | A failed package prerequisite check must prevent creation of a new candidate VSIX. | N-12, N-15, D-14 | Failed checks cannot supply a release candidate. | T: Each failed code, unit-test, document, or build check gives a nonzero result and no new VSIX. |
+| BLD-005 | The package command must include only the release files in Contract B. | N-13, N-15, D-14 | Bounded package contents. | I, T: Archive entries match the file list. Development dependencies, tests, caches, and source-control data are absent. |
+| BLD-006 | Each offline build command in Contract B must complete with network access disabled after dependency setup. | N-13, N-14, D-14 | Local build independence. | T: The listed commands pass with locked tools installed and network access disabled. |
+| BLD-007 | The integration test command must use the supplied VS Code executable in a separate test profile. | N-08, N-12, D-13 | Reproducible host selection without personal settings changes. | T: The runner records the selected version and uses temporary profile and workspace paths. A failed test gives a nonzero result. |
+| BLD-008 | The document check command must identify the reference mismatches defined in Contract B. | N-12, N-16, D-15 | Documentation matches the implemented interface. | T: A wrong command ID, setting default, preset value, invalid JSON, or broken internal link gives a nonzero result. |
+
+### 6.14 GitHub delivery and installation
+
+| ID | Requirement | Source | Rationale | Verification and pass condition |
+| --- | --- | --- | --- | --- |
+| DEL-001 | Each release must supply its tested VSIX as a GitHub Release asset. | N-15, U-18 | Primary installation source. | I, T: The actual release page supplies the VSIX whose checksum matches the verification record. |
+| DEL-002 | The same release VSIX must install in each desktop environment in Matrix E. | N-08, N-15, U-18 | One user download for supported desktops. | D: The same asset hash passes installation and command discovery on the minimum and current stable hosts. |
+| DEL-003 | A downloaded release VSIX must install without network access or additional build tools. | N-13, N-15, U-18 | Simple offline installation. | D: Graphical installation succeeds on a clean host without additional Node.js, npm, or Git installations while the network is disabled. |
+| DEL-004 | The documented source path must give an installable VSIX from its stated release tag. | N-15, U-18 | Supported secondary installation path. | D: A clean checkout follows the guide and produces a package with the same extension ID and version as that release. |
+| DEL-005 | Each release must use the version relationships in Contract B. | N-15, D-14 | Source and package identification. | I, T: The tag, manifest, filename, changelog, and release record identify the same version. |
+| DEL-006 | Each GitHub Release must supply a SHA-256 checksum for its VSIX asset. | N-15, D-14 | Exact artifact comparison. | T: The `SHA256SUMS` entry equals the downloaded asset's calculated SHA-256 value. |
+| DEL-007 | Installing a newer release must keep saved extension settings unchanged. | N-02, N-15, U-18 | Updates keep workspace identity and preferences. | T: An upgrade fixture keeps the saved primary color, user presets, selected parts, and automatic assignment settings after activation. |
+| DEL-008 | The extension ID must stay unchanged between releases. | N-02, N-15, D-14 | VSIX updates target the existing extension. | I, T: Package fixtures from successive versions keep the same manifest publisher and name. |
+
+### 6.15 Implementation documentation
+
+| ID | Requirement | Source | Rationale | Verification and pass condition |
+| --- | --- | --- | --- | --- |
+| DOC-001 | The repository README must satisfy its Catalog D entry. | N-15, N-16, U-19 | Clear project entry point. | I, D: The README presents GitHub VSIX installation first and supplies the required quick start and working guide links. |
+| DOC-002 | The installation guide must satisfy its Catalog D entry. | N-15, N-16, U-19 | Verified installation and update instructions. | I, D: The two installation paths and the update procedure complete using the guide on the supported desktop hosts. |
+| DOC-003 | The user guide must satisfy its Catalog D entry. | N-16, U-19 | Complete instructions for the command set. | I, D: All 17 commands and required behavior topics have usable instructions and the stated results. |
+| DOC-004 | The settings reference must satisfy its Catalog D entry. | N-16, U-19 | Predictable configuration. | I, T: Each manifest setting matches its documented type, default, scope, domain, and invalid-input behavior. |
+| DOC-005 | The troubleshooting guide must satisfy its Catalog D entry. | N-11, N-16, U-19 | Recovery from known failure conditions. | I, D: Each catalog condition has a symptom, an applicable action, and a result or remaining limitation. |
+| DOC-006 | The contributor guide must satisfy its Catalog D entry. | N-14, N-16, U-19 | Usable maintenance instructions. | I, D: A clean source checkout completes setup, checks, tests, and package creation using the stated prerequisites and commands. |
+| DOC-007 | The changelog must satisfy its Catalog D entry. | N-15, N-16, U-19 | Visible release changes. | I: The delivered version has a dated entry with the required change and compatibility information. |
+| DOC-008 | The build-tool record must satisfy its Catalog D entry. | N-14, N-16, U-17 | Inspectable dependency decisions. | I, T: Tool versions and package counts match the reviewed lockfile. Each review field is present. |
+| DOC-009 | Each release record must satisfy its Catalog D entry. | N-12, N-15, N-16, U-19 | Release evidence at a stable source path. | I: The versioned record contains the required identity, tool, verification, installation, limitation, and asset fields. |
+| DOC-010 | The design and requirements must satisfy their Catalog D entry. | N-12, N-16, U-19 | Specifications stay current during implementation. | I: Release interfaces and decisions match the specifications. Pending differences keep this requirement Open. |
+| DOC-011 | Each implementation change must update the documentation affected by that change. | N-16, U-19 | Documentation is part of feature delivery. | I: The same change contains the applicable document updates or a recorded explanation that no document is affected. |
+| DOC-012 | Project prose documents must follow the writing rules in Section 9. | N-12, N-16, U-13 | Consistent controlled English. | I: Prose review covers ASD-STE100 sentence rules, approved words, technical terms, and procedural steps. |
+| DOC-013 | Each requirement change must keep the requirement structure in Section 1. | N-12, U-13 | Stable INCOSE requirement attributes. | I: Each changed obligation has a stable ID, source, rationale, verification method, and measurable pass condition. |
+| DOC-014 | Each runnable documentation example must pass its documented validation procedure. | N-16, D-15 | Copyable instructions. | T: JSON examples pass the applicable schema. Command examples give the stated result from the stated prerequisites. |
+| DOC-015 | Each internal documentation link must resolve in its delivered copy. | N-16, D-15 | Usable navigation. | T: Repository and packaged document checks find each relative target and anchor in the applicable delivered files. |
+| DOC-016 | The VSIX must include the documents marked Yes in Catalog D. | N-15, N-16, D-15 | User instructions travel with the package. | I, D: Archive inspection finds each required guide. Its instruction text remains readable without remote content. |
+
 ## 7. Contract details
 
 ### 7.1 Eligibility
@@ -667,6 +769,73 @@ Color choices, shade commands, Choose Colored Parts, and Reset add appearance hi
 
 Undo history lasts for the current window session. An external change to effective workspace appearance clears the history. A Reset entry contains the previous workspace automatic assignment override, including its absence.
 
+### 7.7 Contract B: Build and delivery
+
+#### Approved tools
+
+The approved direct development packages are the following four packages. Their transitive dependencies are permitted only through the reviewed and locked tree.
+
+| Package | Purpose |
+| --- | --- |
+| `typescript` | Type checking and compilation. |
+| `@types/vscode` | Types for the minimum supported VS Code API. |
+| `@types/node` | Types for the Node.js APIs available in the supported extension host. |
+| `@vscode/vsce` | VSIX package creation. |
+
+Runtime dependency fields in the project manifest are absent or empty. These fields include `dependencies`, `optionalDependencies`, and `peerDependencies`. Third-party runtime packages are also excluded from compiled files and copied source.
+
+Direct development versions are exact values without version ranges. The committed `package-lock.json` records the full resolved tree, including optional packages. Build-tool review precedes execution of package code from a new tree.
+
+The review records each package's source and integrity value. It examines the tree's package additions, removals, advisories, and installation scripts. It records the disposition of each concern without claiming that an empty advisory report proves safety.
+
+An additional direct package needs an explicit user decision that changes this list. The four approved names do not permit an unrelated test framework, bundler, runtime library, or package downloader.
+
+#### Source prerequisites and commands
+
+Source acquisition needs Git for the documented clone procedure. Build-tool setup needs a supported Node.js LTS release and its compatible npm version. Implementation records exact tested versions in the build-tool record and contributor guide.
+
+Integration tests also need the selected VS Code executable and the normal host prerequisites in Matrix E. Downloaded VSIX users need no build tools. The remote rows keep their normal remote environment prerequisites.
+
+| Command from the repository root | Required result | Offline after setup |
+| --- | --- | --- |
+| `npm ci --ignore-scripts` | Install the committed dependency tree without lifecycle scripts. Stop on a manifest and lockfile mismatch. | No |
+| `npm run check` | Check TypeScript without emission, manifest data, runtime imports, approved dependencies, and catalog agreement. | Yes |
+| `npm test` | Compile test inputs and run the unit suite with Node.js built-in tests and assertions. Report failures through a nonzero exit code. | Yes |
+| `npm run docs:check` | Check internal links, configuration examples, command IDs, setting metadata, and preset names and values against the implementation. | Yes |
+| `npm run build` | Remove stale output and compile project runtime modules with the specified compiler constraints. | Yes |
+| `npm run test:integration -- --vscode-path <path>` | Start the supplied VS Code executable with the project test runner, temporary workspaces, and a separate test profile. | Yes, for local fixtures |
+| `npm run package` | Run code, unit-test, document, and build checks. Create the candidate VSIX with the local packager and inspect its contents. | Yes |
+
+The `<path>` value is the supplied VS Code executable. The installation and contributor guides supply working host-specific examples with clearly identified user-supplied paths.
+
+TypeScript uses `strict: true`, `noEmitOnError: true`, and `importHelpers: false`. It emits CommonJS project modules through one extension entry module. Tests and build scripts use Node.js built-in modules and approved tools.
+
+Compiler-emitted language helpers are part of normal compilation. They do not add a runtime package.
+
+Each failed source command returns a nonzero exit code. Commands use installed local tools without a global compiler or packager. They do not fetch packages implicitly. Package creation does not publish a release.
+
+The package checks run explicitly in the project command. They do not use package lifecycle hooks that `--ignore-scripts` can suppress.
+
+The source build produces equivalent versioned project content from the recorded source and tools. ZIP timestamps and other archive metadata can differ between builds. The release checksum always identifies the actual published artifact.
+
+#### Release contents and identity
+
+The VSIX contains its required package metadata, compiled project runtime files, preset data, project assets, selected license, and Catalog D package documents. The implementation records an explicit release file list for archive checks.
+
+The archive excludes `node_modules`, TypeScript sources, tests, build scripts, caches, source-control data, and local configuration files. The packager uses `--no-dependencies` and the explicit file selection.
+
+The manifest name is `iroiro-iro`. The owner supplies the publisher ID, repository URL, and license before the first release. The extension ID is `<publisher>.iroiro-iro`.
+
+The manifest version is the release version. The tag is `v<version>`, the VSIX is `iroiro-iro-<version>.vsix`, and the record is `docs/releases/<version>.md`.
+
+The release attaches that VSIX and `SHA256SUMS`. The checksum file contains the asset filename and its SHA-256 value. Changelog entries and release notes identify the same version. The release record identifies the exact source commit used to build the tested VSIX.
+
+The release record can be completed after the source tag. Final delivery checks verify the published asset links, download, and checksum. Local package creation does not need these publication results.
+
+The primary installation path downloads the GitHub Release VSIX. The secondary path builds the same extension ID and version from the stated source tag. The two paths use VS Code's graphical or CLI VSIX installation.
+
+Updates use a newer VSIX from GitHub Releases. Update instructions state the effect on saved settings and explain version verification. The extension does not download updates or poll a release service.
+
 ## 8. Traceability to the design
 
 | Requirement group | Design sections |
@@ -682,10 +851,18 @@ Undo history lasts for the current window session. An external change to effecti
 | DAT | 5, 6, 7, 11 |
 | RES | 4, 6, 7, 11 |
 | QUA | 3, 11, 12, 13 |
+| DEP | 12, 13 |
+| BLD | 13 |
+| DEL | 2, 13 |
+| DOC | 13, 15 |
 
 Each requirement row also traces directly to a stakeholder need. Engineering decision IDs identify chosen implementation constraints and derived limits. These limits stay reviewable with this draft.
 
 ## 9. Document review criteria
+
+Project prose follows ASD-STE100 Issue 9. Descriptive sentences contain at most 25 words. Procedural sentences contain at most 20 words. Each procedural step gives one instruction unless actions must occur at the same time.
+
+The review checks approved vocabulary, permitted technical terms, active voice, and consistent names. API identifiers, file paths, code, and project color names keep their necessary technical forms. Instructional images have text alternatives and supplement complete text steps.
 
 The review examines necessity, one-obligation structure, explicit conditions, consistent terms, feasibility, and verification criteria. It also examines the requirement set for missing behavior and conflicts.
 
@@ -703,3 +880,9 @@ The implementation verification stays Open until actual evidence exists. Documen
 | [VS Code 1.104 release notes](https://code.visualstudio.com/updates/v1_104#_window-border-color-support-on-windows) | Windows border support. |
 | [VS Code settings](https://code.visualstudio.com/docs/configure/settings) | Scope and persistence model. |
 | [W3C contrast criterion](https://www.w3.org/TR/WCAG22/#contrast-minimum) | Contrast calculation target for owned text pairs. |
+| [VS Code VSIX installation](https://code.visualstudio.com/docs/configure/extensions/extension-marketplace#install-from-a-vsix) | Graphical and CLI installation, and default VSIX update behavior. |
+| [VS Code package publication](https://code.visualstudio.com/api/working-with-extensions/publishing-extension) | VSIX packaging and delivery outside the Marketplace. |
+| [GitHub release links](https://docs.github.com/en/repositories/releasing-projects-on-github/linking-to-releases) | Links to release pages and release assets. |
+| [npm clean installation](https://docs.npmjs.com/cli/v11/commands/npm-ci/) | Lockfile-based setup and disabled lifecycle scripts. |
+| [Node.js test runner](https://nodejs.org/api/test.html) | Built-in test execution. |
+| [VS Code integration testing](https://code.visualstudio.com/api/working-with-extensions/testing-extension) | Project test runners and supplied VS Code executables. |

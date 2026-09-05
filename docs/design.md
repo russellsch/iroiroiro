@@ -3,7 +3,7 @@
 | Item | Value |
 | --- | --- |
 | Document ID | IRO-DES-001 |
-| Revision | 0.1 |
+| Revision | 0.2 |
 | Date | 2026-09-05 |
 | Status | Draft for review |
 | Product | iroiro iro (色々色) |
@@ -39,6 +39,10 @@ This document defines the implementation design. The requirements document defin
 | U-13 | Use ASD-STE100 and INCOSE guidance for the documents. |
 | U-14 | Use solid hex colors and live previews. Escape restores the previous appearance. |
 | U-15 | Supply more than 200 built-in color presets with clear English names. |
+| U-16 | Ship no third-party runtime packages. |
+| U-17 | Use TypeScript, VS Code and Node type definitions, and Microsoft's VSIX packager as build tools. Review and lock the full dependency tree. |
+| U-18 | Use GitHub Release VSIX files as the primary install path. Also support installation from a source build. |
+| U-19 | Write installation and other implementation documents with the implemented features. |
 
 U-14 was the stated default in the readiness message. The user then approved document preparation.
 
@@ -62,6 +66,10 @@ These decisions define details that the user did not specify. They stay subject 
 | D-10 | Reset clears the workspace color and disables automatic assignment for that workspace. | The next startup does not immediately replace the Reset result. |
 | D-11 | Keep the theme colors for debugger, error, warning, and remote status indicators. | These indicators show states other than workspace identity. |
 | D-12 | Use the timing limits in requirements Profile T. | The user target "quick" must have a measurable acceptance criterion. |
+| D-13 | Compile TypeScript into project JavaScript modules. Use Node.js built-in test and assertion modules. | This approach keeps the build-tool list small. |
+| D-14 | Use the build commands and package contents in requirements Contract B. | Local contributors and release preparation use the same process. |
+| D-15 | Supply the implementation documents in requirements Catalog D. | Installation, use, recovery, and maintenance need verified instructions. |
+| D-16 | Use manual VSIX updates from GitHub Releases. | Updates use the chosen delivery path without an extension update service. |
 
 ### 2.3 Scope limits
 
@@ -602,7 +610,13 @@ Log entries contain operation IDs, part IDs, error codes, and timing values. The
 
 Requirements Profile T defines latency measurements. Color calculation runs outside file I/O. The local coordination wait has a 250 ms total budget, including reservation retries.
 
-The release build uses one bundled entry point. VS Code supplies the extension runtime. The project uses a locked dependency file and excludes development dependencies from the VSIX.
+VS Code supplies the extension runtime. The installed extension contains project code, project assets, and its manifest. Its runtime imports use project modules, the VS Code API, or Node.js built-in modules.
+
+The extension contains no third-party runtime package, including a package copied into project source or combined with emitted code. Local color operations need no additional runtime, command-line tool, companion extension, or account.
+
+Remote use still needs the applicable VS Code remote environment in Matrix E. These remote prerequisites belong to that environment. The coloring extension adds no remote program or service requirement.
+
+The build uses one extension entry module and compiled project modules. Build tools stay in development dependencies and outside the VSIX. Section 13.4 defines their approved scope.
 
 ## 13. Verification and delivery
 
@@ -618,6 +632,8 @@ The release build uses one bundled entry point. VS Code supplies the extension r
 
 Each implementation step includes the applicable requirement checks. Implementation of live preview starts after verification of the settings writer and recovery functions.
 
+Each step also updates the documents for the behavior that it implements. Installation instructions are written when the package command becomes available. Verification then uses those instructions with the actual VSIX.
+
 ### 13.2 Verification groups
 
 | Group | Evidence |
@@ -631,6 +647,9 @@ Each implementation step includes the applicable requirement checks. Implementat
 | Remote integration | Workspace writes through SSH, WSL, and containers with a local UI host. |
 | Visual inspection | Each selected part, theme kind, activity bar position, and applicable host restriction. |
 | Performance | The measured percentiles and event boundaries in Profile T. |
+| Build tools | Approved direct tools, the reviewed dependency tree, exact versions, and the committed lockfile. |
+| Package delivery | Package contents, GitHub assets, checksums, offline installation, source installation, and preserved settings after an update. |
+| Implementation documents | Catalog D coverage, usable commands, valid examples, working links, and the project writing rules. |
 
 The implementation records a result for each requirement. A skipped platform check stays open and identifies its blocking condition. A unit test with a Pass result does not replace a necessary visual or remote check.
 
@@ -638,7 +657,65 @@ The implementation records a result for each requirement. A skipped platform che
 
 The release record contains the VS Code version, operating system version, test configuration, and VSIX hash. It links each requirement ID to its verification result.
 
-Publication needs a separate release decision. This design defines the package and its checks but does not select a marketplace publisher or a license.
+Publication needs a separate release decision. The owner supplies the GitHub repository URL, manifest publisher ID, and license before the first release. Release preparation records these values.
+
+The release version connects the source tag, manifest, VSIX filename, changelog, and verification record. The checksum identifies the exact tested VSIX. The release record links to that asset and its source commit.
+
+Local package checks finish before publication. Final delivery checks verify the published asset links, download, and checksum. The release record can be completed after the source tag. It always identifies the exact commit used to build the tested package.
+
+### 13.4 Source build and dependency control
+
+Requirements Contract B defines the approved direct tools and the source commands. The approved packages are `typescript`, `@types/vscode`, `@types/node`, and `@vscode/vsce`.
+
+Implementation selects exact versions that work together. The VS Code type definitions match the minimum supported API. The compiler uses strict checking and stops emission on an error. [TypeScript strict checking](https://www.typescriptlang.org/tsconfig/strict.html), [emission on error](https://www.typescriptlang.org/tsconfig/noEmitOnError.html)
+
+The build-tool review covers the full dependency tree, including optional and transitive packages. It records package counts, sources, integrity values, known advisories, and the disposition of each concern. The record identifies the reviewed lockfile by its SHA-256 hash.
+
+The user has approved the direct tool names. A new direct tool requires an explicit user decision. Version changes and transitive changes need a new recorded review of the resulting tree.
+
+Dependency setup uses the committed lockfile and disables package lifecycle scripts. Project commands call the installed local tools. They do not use global tool installations or commands that fetch a missing package. [npm clean installation](https://docs.npmjs.com/cli/v11/commands/npm-ci/)
+
+The TypeScript compiler emits CommonJS project modules without a separate bundler. Compiler helper imports from external packages are disabled. Build scripts use Node.js built-in modules.
+
+Unit tests use `node:test` and `node:assert`. Integration tests use a project runner and a supplied VS Code executable. The runner starts VS Code with `--extensionDevelopmentPath` and `--extensionTestsPath`. [Node.js test runner](https://nodejs.org/api/test.html), [VS Code integration testing](https://code.visualstudio.com/api/working-with-extensions/testing-extension)
+
+The integration runner uses separate test profiles and temporary workspaces. It reports failures through a nonzero exit code. Release verification supplies the exact hosts required by Matrix E.
+
+The package command checks the documents and code before it creates a candidate VSIX. The installed packager uses `--no-dependencies` and the release file list. Package inspection also checks for combined or copied third-party runtime code.
+
+After dependency setup, the offline commands in Contract B need no network access. Source acquisition and initial tool downloads can use the network. Local package creation needs no GitHub credential or release service.
+
+### 13.5 GitHub installation and updates
+
+Each release supplies `iroiro-iro-<version>.vsix` and `SHA256SUMS` as GitHub Release assets. One VSIX serves all desktop environments in Matrix E. The source tag uses `v<version>`.
+
+The primary instructions start with the release page and identify the VSIX asset. GitHub source ZIP and TAR files are source archives. The source build instructions explain their separate purpose. [GitHub release links](https://docs.github.com/en/repositories/releasing-projects-on-github/linking-to-releases)
+
+The primary procedure uses `Extensions: Install from VSIX` in VS Code. An alternative procedure uses `code --install-extension <path-to-vsix>`. CLI setup has its own instructions, so the graphical procedure needs no shell command. [VS Code VSIX installation](https://code.visualstudio.com/docs/configure/extensions/extension-marketplace#install-from-a-vsix)
+
+Once downloaded, the VSIX installs without network access or additional Node.js, npm, or Git installations. Local color use also works offline. A remote session still needs its normal connection.
+
+The secondary path checks out a release tag, installs the locked build tools, runs the documented checks, and creates the VSIX. It then uses the same installation procedure. The installed extension ID is the same for the two paths.
+
+Updates use a newer VSIX from the release page. VSIX installation disables automatic extension updates by default in VS Code. The extension supplies no update checker. [VS Code VSIX update behavior](https://code.visualstudio.com/docs/configure/extensions/extension-marketplace#install-from-a-vsix)
+
+An update preserves saved extension settings. The guide explains how to identify the installed version, apply an update, and find the release notes. It does not promise compatibility with an older release after a storage format change.
+
+Reset and uninstall instructions keep the recovery rules in Section 7.4. Installation documentation explains local UI installation for SSH, WSL, and container sessions.
+
+### 13.6 Implementation documentation
+
+Requirements Catalog D defines the document paths and required content. Implementation creates the missing files and updates the current design and requirements as behavior changes.
+
+The repository README presents the GitHub VSIX path first. It links to complete installation, user, settings, and troubleshooting guides. Contributor instructions identify the exact build prerequisites and source commands.
+
+The user guides contain complete text instructions. Packaged guides use local assets. Instructional images have text alternatives and do not replace a necessary step.
+
+The command reference covers all 17 commands. The settings reference covers each property, its type, default, scope, accepted values, and invalid-input behavior. The user guide contains a generated reference for the 240 built-in names and values. This reference matches Catalog P.
+
+Document checks compare references with the manifest, schemas, and color catalogs. They parse configuration examples and check internal links. A release review verifies external installation links and follows the two installation paths on the stated hosts.
+
+The prose follows ASD-STE100. Requirement changes keep the INCOSE structure used in this specification. Planned behavior is identified as planned until implementation verification supplies evidence.
 
 ## 14. Alternatives and residual risks
 
