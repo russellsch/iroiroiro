@@ -3,7 +3,7 @@
 | Item | Value |
 | --- | --- |
 | Document ID | IRO-DES-001 |
-| Revision | 0.2 |
+| Revision | 0.3 |
 | Date | 2026-09-05 |
 | Status | Draft for review |
 | Product | iroiro iro (色々色) |
@@ -43,6 +43,9 @@ This document defines the implementation design. The requirements document defin
 | U-17 | Use TypeScript, VS Code and Node type definitions, and Microsoft's VSIX packager as build tools. Review and lock the full dependency tree. |
 | U-18 | Use GitHub Release VSIX files as the primary install path. Also support installation from a source build. |
 | U-19 | Write installation and other implementation documents with the implemented features. |
+| U-20 | Specify TypeScript code quality checks and coding practices. |
+| U-21 | Add ESLint with TypeScript rules. Review and lock the added dependency tree. |
+| U-22 | Add Prettier with one project configuration. |
 
 U-14 was the stated default in the readiness message. The user then approved document preparation.
 
@@ -66,10 +69,13 @@ These decisions define details that the user did not specify. They stay subject 
 | D-10 | Reset clears the workspace color and disables automatic assignment for that workspace. | The next startup does not immediately replace the Reset result. |
 | D-11 | Keep the theme colors for debugger, error, warning, and remote status indicators. | These indicators show states other than workspace identity. |
 | D-12 | Use the timing limits in requirements Profile T. | The user target "quick" must have a measurable acceptance criterion. |
-| D-13 | Compile TypeScript into project JavaScript modules. Use Node.js built-in test and assertion modules. | This approach keeps the build-tool list small. |
+| D-13 | Compile TypeScript into project JavaScript modules. Use Node.js built-in test and assertion modules. | Unit tests need no additional test framework. |
 | D-14 | Use the build commands and package contents in requirements Contract B. | Local contributors and release preparation use the same process. |
 | D-15 | Supply the implementation documents in requirements Catalog D. | Installation, use, recovery, and maintenance need verified instructions. |
 | D-16 | Use manual VSIX updates from GitHub Releases. | Updates use the chosen delivery path without an extension update service. |
+| D-17 | Use the compiler flags and coding practices in requirements Contract Q. | Static checks identify invalid settings data and operation state. |
+| D-18 | Use ESLint with type information and the explicit rules in Contract Q. Treat warnings as failures. | Lint checks identify errors beyond compiler diagnostics. |
+| D-19 | Use Prettier for formatting and separate commands for automatic corrections. | Normal verification keeps source files unchanged. |
 
 ### 2.3 Scope limits
 
@@ -648,6 +654,7 @@ Each step also updates the documents for the behavior that it implements. Instal
 | Visual inspection | Each selected part, theme kind, activity bar position, and applicable host restriction. |
 | Performance | The measured percentiles and event boundaries in Profile T. |
 | Build tools | Approved direct tools, the reviewed dependency tree, exact versions, and the committed lockfile. |
+| Code quality | Compiler flags, typed lint coverage, formatting, external-data validation, resource cleanup, and recorded exceptions. |
 | Package delivery | Package contents, GitHub assets, checksums, offline installation, source installation, and preserved settings after an update. |
 | Implementation documents | Catalog D coverage, usable commands, valid examples, working links, and the project writing rules. |
 
@@ -665,7 +672,7 @@ Local package checks finish before publication. Final delivery checks verify the
 
 ### 13.4 Source build and dependency control
 
-Requirements Contract B defines the approved direct tools and the source commands. The approved packages are `typescript`, `@types/vscode`, `@types/node`, and `@vscode/vsce`.
+Requirements Contract B defines the approved direct tools and source commands. The list includes compilation, type definitions, VSIX packaging, ESLint with TypeScript rules, and Prettier. Supporting ESLint configurations are listed explicitly.
 
 Implementation selects exact versions that work together. The VS Code type definitions match the minimum supported API. The compiler uses strict checking and stops emission on an error. [TypeScript strict checking](https://www.typescriptlang.org/tsconfig/strict.html), [emission on error](https://www.typescriptlang.org/tsconfig/noEmitOnError.html)
 
@@ -681,7 +688,7 @@ Unit tests use `node:test` and `node:assert`. Integration tests use a project ru
 
 The integration runner uses separate test profiles and temporary workspaces. It reports failures through a nonzero exit code. Release verification supplies the exact hosts required by Matrix E.
 
-The package command checks the documents and code before it creates a candidate VSIX. The installed packager uses `--no-dependencies` and the release file list. Package inspection also checks for combined or copied third-party runtime code.
+The package command checks types, lint, formatting, tests, and documents before it creates a candidate VSIX. The installed packager uses `--no-dependencies` and the release file list. Package inspection also checks for combined or copied third-party runtime code.
 
 After dependency setup, the offline commands in Contract B need no network access. Source acquisition and initial tool downloads can use the network. Local package creation needs no GitHub credential or release service.
 
@@ -716,6 +723,38 @@ The command reference covers all 17 commands. The settings reference covers each
 Document checks compare references with the manifest, schemas, and color catalogs. They parse configuration examples and check internal links. A release review verifies external installation links and follows the two installation paths on the stated hosts.
 
 The prose follows ASD-STE100. Requirement changes keep the INCOSE structure used in this specification. Planned behavior is identified as planned until implementation verification supplies evidence.
+
+### 13.7 TypeScript code quality
+
+Requirements Contract Q defines the compiler flags, lint rules, formatter settings, and exception policy. The implementation records their configuration in versioned project files. The contributor guide explains the commands and links to `docs/code-quality.md`.
+
+Strict compilation covers runtime code and TypeScript tests. Indexed access includes the possibility of an absent value. Optional properties distinguish an absent field from a field set to `undefined`. These checks support the settings ownership model. [Indexed access](https://www.typescriptlang.org/tsconfig/noUncheckedIndexedAccess.html), [optional properties](https://www.typescriptlang.org/tsconfig/exactOptionalPropertyTypes.html)
+
+Compiler checking uses the full project, including declaration files. Build output stays compatible with the minimum VS Code host. Type-only imports use `import type`. Exported function contracts state their input and output types.
+
+ESLint uses `eslint.config.mjs`. Its shared presets are ESLint recommended rules and `typescript-eslint` recommended rules with type information. Contract Q adds explicit checks for the project's failure conditions. [Typed linting](https://typescript-eslint.io/getting-started/typed-linting/), [shared configurations](https://typescript-eslint.io/users/configs/)
+
+Type information comes from the project service for each authored TypeScript file. JavaScript scripts and configuration files use applicable JavaScript rules. Tests receive the same applicable correctness checks as runtime code.
+
+The lint command treats errors and warnings as failures. It also reports unused suppression comments. Normal lint checks do not change source. The separate correction command uses ESLint's automatic fixes. [ESLint CLI](https://eslint.org/docs/latest/use/command-line-interface)
+
+Prettier uses one root configuration. It formats source, scripts, configuration data, and Markdown. Its ESLint compatibility configuration disables conflicting formatting rules. Prettier runs as its own command. [Prettier integration](https://prettier.io/docs/integrating-with-linters)
+
+Format verification uses `--check`. The explicit formatting command uses `--write`. Lint and format verification keep source files unchanged. The package command runs the verification forms. [Prettier CLI](https://prettier.io/docs/cli)
+
+Data from settings, JSON, extension storage, and peer records enters through a validation function. The input type is `unknown` until checks confirm the expected structure. A type assertion does not replace those checks.
+
+Finite operation states use literal unions or discriminated unions. State switches include a case for each declared member. Shared catalog data and captured snapshots use readonly types. The operation controller creates new state values when ownership changes.
+
+Promise checks include VS Code thenables. Each asynchronous operation is awaited, returned to an accountable caller, or given a terminal rejection handler. A callback that expects `void` uses a synchronous wrapper when it starts asynchronous work. [Promise checks](https://typescript-eslint.io/rules/no-floating-promises/), [callback checks](https://typescript-eslint.io/rules/no-misused-promises/)
+
+The terminal rejection handler reports the failure through the diagnostic adapter and does not throw. Cancellation uses the defined operation result. Empty error handlers cannot replace the recovery behavior in Section 7.
+
+Components own their subscriptions, timers, controls, and file handles. Cleanup follows completion, cancellation, failure, and deactivation as applicable. Repeated cleanup is safe. Pure color modules stay independent of host APIs and components with side effects.
+
+Code review examines these boundaries, failure paths, naming, and comments for non-obvious behavior. Comments explain units, rounding, ownership, and cancellation when the types do not express them. Tests check observable behavior and repeat the conditions of corrected defects.
+
+Rule exceptions identify the exact rule, affected line, explanation, and supporting check. A local false positive can use a narrowly scoped suppression through Contract Q. Changing a project-wide rule needs a recorded design decision. These local exceptions use code review without a new user approval.
 
 ## 14. Alternatives and residual risks
 

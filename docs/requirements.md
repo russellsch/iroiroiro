@@ -3,7 +3,7 @@
 | Item | Value |
 | --- | --- |
 | Document ID | IRO-REQ-001 |
-| Revision | 0.2 |
+| Revision | 0.3 |
 | Date | 2026-09-05 |
 | Status | Draft for review |
 | Product | iroiro iro (色々色) |
@@ -20,7 +20,7 @@ All numbered requirements have release priority P1, which means necessary for Re
 
 Each source points to a stakeholder need or an engineering decision. The need table identifies the originating user decisions. The design contains the full decision register.
 
-Catalogs P, S, C, and D, Profile T, Matrix E, and Contract B form part of this specification. They define reference data, delivery content, build commands, and verification conditions.
+Catalogs P, S, C, and D, Profile T, Matrix E, and Contracts B and Q form part of this specification. They define reference data, delivery content, build commands, code quality rules, and verification conditions.
 
 The prose uses ASD-STE100 Issue 9. The requirement structure uses the published INCOSE Guide to Writing Requirements V4 summary. The terminology register defines the software terms used in this document.
 
@@ -41,11 +41,12 @@ The prose uses ASD-STE100 Issue 9. The requirement structure uses the published 
 | N-11 | The user wants recovery from extension appearance changes. | Derived from N-02, N-10 and design D-08 through D-10 |
 | N-12 | The project wants clear, traceable, verifiable requirements. | U-13 |
 | N-13 | The user wants local color use without third-party runtime packages or additional installed tools. | U-16 |
-| N-14 | The user wants a small, reviewed, locked set of build tools. | U-17 |
+| N-14 | The user wants a small, reviewed, locked set of build tools. | U-17, U-21, U-22 |
 | N-15 | The user wants GitHub VSIX installation and a documented source build path. | U-18 |
 | N-16 | The user wants implementation documents for installation, use, recovery, and maintenance. | U-13, U-19 |
+| N-17 | The user wants checked TypeScript code and consistent source formatting. | U-20, U-21, U-22 |
 
-U-01 through U-19 are the user decisions in [Design Section 2](design.md#2-scope-and-decisions). D-01 through D-16 are engineering decisions in that section.
+U-01 through U-22 are the user decisions in [Design Section 2](design.md#2-scope-and-decisions). D-01 through D-19 are engineering decisions in that section.
 
 ## 3. Terminology register
 
@@ -75,9 +76,11 @@ These terms use the computer science, mathematical, color, or specification cont
 | debounce interval | Delay that replaces pending input with the latest input. |
 | dependency tree | Direct and transitive packages selected for the build tools. |
 | direct dependency | Package explicitly listed in the project manifest. |
+| discriminated union | Union whose members have a common property with different literal values. |
 | extension API | Public interface through which an extension uses VS Code services. |
 | external edit | Configuration change outside the current extension operation. |
 | foreground | Text or icon color drawn on a background. |
+| formatter | Development tool that applies the project's source layout rules. |
 | Git worktree | Separate working directory for a Git repository checkout. |
 | GitHub Release | Repository release page with a source tag, release notes, and downloadable assets. |
 | heartbeat | Periodic update that keeps a window record current. |
@@ -87,6 +90,7 @@ These terms use the computer science, mathematical, color, or specification cont
 | journal | Record that supports recovery from an interrupted operation. |
 | JSON | JavaScript Object Notation data format. |
 | lifecycle script | Package script that a package manager can run during dependency installation. |
+| lint check | Static analysis of source code against configured rules. |
 | lockfile | File that records exact dependency versions, sources, and integrity values. |
 | LTS | Long-term support status of a software release. |
 | manifest | Project `package.json` data that identifies the extension and its contributions. |
@@ -106,6 +110,8 @@ These terms use the computer science, mathematical, color, or specification cont
 | release asset | File attached to a GitHub Release. |
 | Quick Pick | Native VS Code control for selection from a list. |
 | readback | Configuration read that verifies an attempted write. |
+| readonly type | Type that prevents assignment through the declared property or array interface. |
+| rule exception | Recorded local departure from a compiler or lint rule. |
 | recovery | Restoration after an interrupted or failed appearance operation. |
 | reservation | Short-lived window record for a proposed random color. |
 | Restricted Mode | VS Code mode for a workspace that the user has not trusted. |
@@ -118,10 +124,13 @@ These terms use the computer science, mathematical, color, or specification cont
 | SHA-256 | Hash function used to derive a workspace identifier. |
 | snapshot | Recorded appearance state at an operation boundary. |
 | surface registry | Fixed mapping from part IDs to supported color keys. |
+| suppression | Local instruction that disables a named compiler or lint diagnostic. |
 | telemetry | Product usage or diagnostic data sent to an external service. |
+| thenable | Object with a `then` method that represents an asynchronous result. |
 | third-party package | Software package maintained outside this project and supplied outside the VS Code or Node.js host. |
 | theme selector | Key that groups color overrides for named VS Code themes. |
 | transitive dependency | Package that a direct or transitive dependency needs. |
+| type assertion | TypeScript expression that supplies a type without a runtime validation check. |
 | UI | User interface. |
 | Unicode code point | One numbered Unicode character value. |
 | URI | Uniform Resource Identifier. |
@@ -152,6 +161,7 @@ The documents use the following verbs only for the stated software or mathematic
 | run, call, return, assign | Program execution and configuration value assignment. |
 | convert, round, hash | Color mathematics and identifier calculation. |
 | compile, build, package, install, emit | Program translation and extension package preparation or installation. |
+| lint, format | Static source analysis and source layout changes. |
 | exclude | Set selection that removes specified members before use. |
 | verify, trace | Comparison against a specification and requirement relationships. |
 
@@ -436,7 +446,8 @@ Implementation supplies the following files. The Package column identifies files
 | User guide | `docs/user-guide.md` | All Catalog C commands, examples, preview cancellation, persistence, presets, automatic assignment, random color limits, colored parts, Undo, and Reset. A generated preset reference that matches Catalog P. | Yes |
 | Settings reference | `docs/settings.md` | Each setting key, type, default, scope, accepted values, and invalid-value behavior. Valid JSON examples for short hex, custom presets, automatic coloring, and selected parts. Workspace file changes and Git visibility. | Yes |
 | Troubleshooting guide | `docs/troubleshooting.md` | Empty windows, unsupported hosts, hidden parts, theme conflicts, read-only settings, failed recovery, invalid configuration, installation failures, and remote placement. Log access and an issue-report template. Manual color removal specified in RES-012. | Yes |
-| Contributor guide | `CONTRIBUTING.md` | Exact build prerequisites, source commands, project structure, unit tests, integration tests, dependency review, package creation, and release preparation. Documentation checks and requirement verification records. | No |
+| Contributor guide | `CONTRIBUTING.md` | Exact build prerequisites, source commands, project structure, unit tests, integration tests, dependency review, package creation, and release preparation. Quality commands, documentation checks, and requirement verification records. Link to the code quality guide. | No |
+| Code quality guide | `docs/code-quality.md` | Compiler flags, lint scope and rules, formatter configuration, verification commands, and correction commands. Types, validation boundaries, promises, state handling, resource ownership, comments, tests, and exception records. | No |
 | Changelog | `CHANGELOG.md` | Version and date for each release. User-visible changes, fixes, compatibility changes, known limitations, and links to release records. | Yes |
 | Build-tool record | `docs/build-tools.md` | Approved direct tools, purpose, exact versions, and Node.js/npm versions. Full-tree review, package counts, source and integrity checks, advisories, dispositions, review date, and lockfile hash. | No |
 | Release record | `docs/releases/<version>.md` | Source tag and commit, package identity, VSIX checksum, tool versions, supported hosts, requirement results, installation results, known limitations, and asset links. | No |
@@ -651,7 +662,7 @@ Each row below contains a pass condition. The verification record identifies its
 | DEP-001 | The installed extension must contain no third-party runtime package. | N-13, U-16 | Small runtime dependency scope. | I: The manifest, import graph, and package contain no external, combined, or copied third-party runtime package. |
 | DEP-002 | Local color operations must use only programs supplied by VS Code and its host operating system. | N-13, U-16 | No separate runtime or command-line tool. | D: The command suite passes in a profile without additional Node.js, npm, Git, or build-tool installations. |
 | DEP-003 | The extension must declare no required companion extension. | N-13, U-16 | Independent local installation. | I, D: The manifest has no `extensionDependencies` or `extensionPack` entries. Local use passes with no other user extension enabled. |
-| DEP-004 | Project development dependencies must use only the approved direct tools in Contract B. | N-14, U-17 | Explicit tool scope. | I, T: The manifest and dependency check reject an additional direct package. |
+| DEP-004 | Project development dependencies must use only the approved direct tools in Contract B. | N-14, U-17, U-21, U-22 | Explicit tool scope. | I, T: The manifest and dependency check reject an additional direct package. |
 | DEP-005 | The lockfile must record the full build-tool dependency tree at exact versions. | N-14, U-17 | Review includes indirect packages. | I, T: Each selected direct, transitive, and optional package has its resolved version, source, and integrity value. |
 | DEP-006 | The documented dependency installation must disable package lifecycle scripts. | N-14, D-14 | Installation does not automatically execute dependency scripts. | I, T: Setup uses `npm ci --ignore-scripts`. An installation trace contains zero package lifecycle script executions. |
 | DEP-007 | The VSIX must contain all project code, preset data, and assets required for local color operations. | N-13, U-16 | Complete offline package. | I, T: Required runtime resources resolve in the package or host APIs. Offline command checks have no missing resource. |
@@ -663,8 +674,8 @@ Each row below contains a pass condition. The verification record identifies its
 | --- | --- | --- | --- | --- |
 | BLD-001 | The repository must supply each command in Contract B. | N-14, N-15, D-14 | A defined source workflow. | I, T: Each command has its specified result and exit behavior from a clean source checkout. |
 | BLD-002 | Source compilation and packaging must use only the prerequisites in Contract B. | N-14, N-15, D-14 | No undocumented global tool. | T: The source flow passes on Windows, macOS, and Linux without a globally installed compiler, packager, or test framework. |
-| BLD-003 | TypeScript compilation must use the compiler constraints in Contract B. | N-14, D-13 | Checked source with no runtime helper package. | I, T: Compiler configuration matches the contract. A type error prevents new JavaScript output. |
-| BLD-004 | A failed package prerequisite check must prevent creation of a new candidate VSIX. | N-12, N-15, D-14 | Failed checks cannot supply a release candidate. | T: Each failed code, unit-test, document, or build check gives a nonzero result and no new VSIX. |
+| BLD-003 | TypeScript compilation must use the compiler constraints in Contracts B and Q. | N-14, N-17, D-13, D-17 | Checked source with no runtime helper package. | I, T: Compiler configuration matches the contracts. A type error prevents new JavaScript output. |
+| BLD-004 | A failed package prerequisite check must prevent creation of a new candidate VSIX. | N-12, N-15, N-17, D-14 | Failed checks cannot supply a release candidate. | T: A failed type, lint, format, unit-test, document, or build check gives a nonzero result and no new VSIX. |
 | BLD-005 | The package command must include only the release files in Contract B. | N-13, N-15, D-14 | Bounded package contents. | I, T: Archive entries match the file list. Development dependencies, tests, caches, and source-control data are absent. |
 | BLD-006 | Each offline build command in Contract B must complete with network access disabled after dependency setup. | N-13, N-14, D-14 | Local build independence. | T: The listed commands pass with locked tools installed and network access disabled. |
 | BLD-007 | The integration test command must use the supplied VS Code executable in a separate test profile. | N-08, N-12, D-13 | Reproducible host selection without personal settings changes. | T: The runner records the selected version and uses temporary profile and workspace paths. A failed test gives a nonzero result. |
@@ -703,6 +714,27 @@ Each row below contains a pass condition. The verification record identifies its
 | DOC-014 | Each runnable documentation example must pass its documented validation procedure. | N-16, D-15 | Copyable instructions. | T: JSON examples pass the applicable schema. Command examples give the stated result from the stated prerequisites. |
 | DOC-015 | Each internal documentation link must resolve in its delivered copy. | N-16, D-15 | Usable navigation. | T: Repository and packaged document checks find each relative target and anchor in the applicable delivered files. |
 | DOC-016 | The VSIX must include the documents marked Yes in Catalog D. | N-15, N-16, D-15 | User instructions travel with the package. | I, D: Archive inspection finds each required guide. Its instruction text remains readable without remote content. |
+| DOC-017 | The code quality guide must satisfy its Catalog D entry. | N-16, N-17, U-20 | Usable contributor practices. | I, D: The guide explains each Contract Q topic and the effects of the quality commands. Recorded exceptions match the implementation. |
+
+### 6.16 TypeScript code quality
+
+| ID | Requirement | Source | Rationale | Verification and pass condition |
+| --- | --- | --- | --- | --- |
+| COD-001 | The lint command must check the authored source files defined in Contract Q. | N-17, U-21 | Scripts and tests receive applicable checks. | I, T: Runtime, test, script, and configuration samples receive the expected rules. No authored source directory is silently excluded. |
+| COD-002 | TypeScript lint checks must use the type information and rules in Contract Q. | N-17, U-21, D-18 | Checks include data flow and asynchronous behavior. | I, T: Effective configuration matches the contract. Unhandled promises and assignments from `any` to domain types receive diagnostics. |
+| COD-003 | The lint command must return a nonzero result for each lint error or warning. | N-17, D-18 | Accepted changes have zero warnings. | T: Error and warning samples each make `npm run lint` unsuccessful. Clean source gives zero. |
+| COD-004 | The lint verification command must keep source and documentation files unchanged. | N-17, D-19 | Verification has no correction side effect. | T: File comparisons before and after successful and failed checks show no source or document change. |
+| COD-005 | The format check command must compare authored files with the formatting rules in Contract Q. | N-17, U-22 | One source layout configuration. | I, T: Effective Prettier options match the contract for each included file type. |
+| COD-006 | The format check command must return a nonzero result for each formatting difference. | N-17, U-22 | Enforced source consistency. | T: A formatting difference makes `npm run format:check` unsuccessful. Correctly formatted files give zero. |
+| COD-007 | The format check command must keep source and documentation files unchanged. | N-17, D-19 | Corrections use an explicit command. | T: File comparisons show no change after `npm run format:check` reports a difference. |
+| COD-008 | External data must pass runtime validation before conversion to an internal domain type. | N-17, D-17 | Type assertions do not validate stored or user data. | I, T: Settings and record inputs use the defined guards. Invalid shapes and values cannot reach a typed operation as valid data. |
+| COD-009 | Each exported function must have explicit input and output types. | N-17, D-17 | Stable module contracts. | I, T: Lint reports missing boundary types. Types declared through an interface or function type satisfy this requirement. |
+| COD-010 | Each switch over an internal state union must include a case for each declared member. | N-17, D-17 | New states cannot silently use an unrelated branch. | T: Adding a union member without its case causes a compiler or lint failure. |
+| COD-011 | Shared catalog and captured snapshot types must use readonly properties and arrays. | N-17, D-17 | Callers cannot accidentally change shared input data. | I, T: Mutation through these types causes a compiler diagnostic. Mutable working state uses a separate object. |
+| COD-012 | Each managed resource must use the cleanup rules in Contract Q. | N-17, D-17 | Operations do not leave active listeners or timers. | I, T: Completion, cancellation, failure, and normal deactivation release applicable resources. Repeated cleanup causes no new failure. |
+| COD-013 | Pure color modules must obey the import boundaries in Contract Q. | N-17, D-17 | Color calculations stay independently testable. | I, T: The import check rejects a direct or transitive path from a pure color module to a prohibited component. |
+| COD-014 | Each diagnostic suppression must obey the exception policy in Contract Q. | N-17, D-18 | Exceptions have a bounded purpose. | I, T: Missing reasons, blanket disables, prohibited directives, and unused suppressions cause a check failure. |
+| COD-015 | Each reproducible defect correction must include a check that demonstrates the original failure. | N-12, N-17, U-20 | Corrected behavior has regression evidence. | T, D: The check fails against the incorrect behavior and passes after correction. Visual defects use a recorded repeatable procedure. |
 
 ## 7. Contract details
 
@@ -773,7 +805,7 @@ Undo history lasts for the current window session. An external change to effecti
 
 #### Approved tools
 
-The approved direct development packages are the following four packages. Their transitive dependencies are permitted only through the reviewed and locked tree.
+The approved direct development packages are listed below. Their transitive dependencies are permitted only through the reviewed and locked tree.
 
 | Package | Purpose |
 | --- | --- |
@@ -781,6 +813,11 @@ The approved direct development packages are the following four packages. Their 
 | `@types/vscode` | Types for the minimum supported VS Code API. |
 | `@types/node` | Types for the Node.js APIs available in the supported extension host. |
 | `@vscode/vsce` | VSIX package creation. |
+| `eslint` | Source lint checks. |
+| `@eslint/js` | ESLint recommended JavaScript rules. |
+| `typescript-eslint` | TypeScript parser, rules, and type information for ESLint. |
+| `prettier` | Source and document formatting. |
+| `eslint-config-prettier` | Disable ESLint rules that conflict with Prettier. |
 
 Runtime dependency fields in the project manifest are absent or empty. These fields include `dependencies`, `optionalDependencies`, and `peerDependencies`. Third-party runtime packages are also excluded from compiled files and copied source.
 
@@ -788,7 +825,7 @@ Direct development versions are exact values without version ranges. The committ
 
 The review records each package's source and integrity value. It examines the tree's package additions, removals, advisories, and installation scripts. It records the disposition of each concern without claiming that an empty advisory report proves safety.
 
-An additional direct package needs an explicit user decision that changes this list. The four approved names do not permit an unrelated test framework, bundler, runtime library, or package downloader.
+An additional direct package needs an explicit user decision that changes this list. The approved names do not permit an unrelated test framework, bundler, runtime library, or package downloader.
 
 #### Source prerequisites and commands
 
@@ -799,16 +836,20 @@ Integration tests also need the selected VS Code executable and the normal host 
 | Command from the repository root | Required result | Offline after setup |
 | --- | --- | --- |
 | `npm ci --ignore-scripts` | Install the committed dependency tree without lifecycle scripts. Stop on a manifest and lockfile mismatch. | No |
-| `npm run check` | Check TypeScript without emission, manifest data, runtime imports, approved dependencies, and catalog agreement. | Yes |
+| `npm run check` | Check types without emission, lint, formatting, manifest data, imports, approved dependencies, and catalog agreement. Keep source and documents unchanged. | Yes |
+| `npm run lint` | Run ESLint with the Contract Q rules and `--max-warnings 0`. Keep source and documents unchanged. | Yes |
+| `npm run lint:fix` | Apply ESLint automatic corrections to the same source scope. Report unresolved findings through a nonzero exit code. | Yes |
+| `npm run format:check` | Run Prettier with `--check` and the project configuration. Keep source and documents unchanged. | Yes |
+| `npm run format` | Apply Prettier with `--write` to the defined authored files. | Yes |
 | `npm test` | Compile test inputs and run the unit suite with Node.js built-in tests and assertions. Report failures through a nonzero exit code. | Yes |
 | `npm run docs:check` | Check internal links, configuration examples, command IDs, setting metadata, and preset names and values against the implementation. | Yes |
 | `npm run build` | Remove stale output and compile project runtime modules with the specified compiler constraints. | Yes |
 | `npm run test:integration -- --vscode-path <path>` | Start the supplied VS Code executable with the project test runner, temporary workspaces, and a separate test profile. | Yes, for local fixtures |
-| `npm run package` | Run code, unit-test, document, and build checks. Create the candidate VSIX with the local packager and inspect its contents. | Yes |
+| `npm run package` | Run type, lint, format, unit-test, document, and build checks. Create the candidate VSIX with the local packager and inspect its contents. | Yes |
 
 The `<path>` value is the supplied VS Code executable. The installation and contributor guides supply working host-specific examples with clearly identified user-supplied paths.
 
-TypeScript uses `strict: true`, `noEmitOnError: true`, and `importHelpers: false`. It emits CommonJS project modules through one extension entry module. Tests and build scripts use Node.js built-in modules and approved tools.
+Contract Q defines the compiler flags. TypeScript emits CommonJS project modules through one extension entry module. Tests and build scripts use Node.js built-in modules and approved tools.
 
 Compiler-emitted language helpers are part of normal compilation. They do not add a runtime package.
 
@@ -836,6 +877,116 @@ The primary installation path downloads the GitHub Release VSIX. The secondary p
 
 Updates use a newer VSIX from GitHub Releases. Update instructions state the effect on saved settings and explain version verification. The extension does not download updates or poll a release service.
 
+### 7.8 Contract Q: TypeScript quality
+
+#### Compiler configuration
+
+Runtime and test TypeScript configurations share these flags. A check configuration covers all authored TypeScript files. Build configuration excludes test output from the release package.
+
+| Compiler option | Value | Purpose |
+| --- | --- | --- |
+| `strict` | `true` | Enable the TypeScript strict-checking group. |
+| `noUncheckedIndexedAccess` | `true` | Check for absent indexed values. |
+| `exactOptionalPropertyTypes` | `true` | Distinguish absent properties from explicit `undefined`. |
+| `useUnknownInCatchVariables` | `true` | Narrow caught values before use. |
+| `noImplicitOverride` | `true` | Identify overrides explicitly. |
+| `noFallthroughCasesInSwitch` | `true` | Reject implicit case fallthrough. |
+| `noImplicitReturns` | `true` | Check return paths. |
+| `noUnusedLocals` | `true` | Reject unused local declarations. |
+| `noUnusedParameters` | `true` | Reject unused parameters, subject to the compiler's underscore convention. |
+| `forceConsistentCasingInFileNames` | `true` | Keep imports consistent across desktop file systems. |
+| `noUncheckedSideEffectImports` | `true` | Check side-effect import resolution. |
+| `skipLibCheck` | `false` | Check declaration files with the selected tool versions. |
+| `noEmitOnError` | `true` | Stop JavaScript emission after compiler errors. |
+| `importHelpers` | `false` | Avoid an imported runtime helper package. |
+
+The check command uses `--noEmit`. The selected output target and module resolution support the minimum VS Code host. Type-only imports use `import type` while runtime output stays CommonJS.
+
+#### ESLint configuration
+
+The root `eslint.config.mjs` uses the flat configuration format. Shared presets are `@eslint/js` recommended rules and `typescript-eslint` `recommendedTypeChecked` rules for TypeScript.
+
+TypeScript files use `parserOptions.projectService: true`. Each file belongs to a project configuration with the compiler flags above. JavaScript scripts and configuration files receive applicable JavaScript rules without a false claim of TypeScript checking.
+
+The lint file set includes authored runtime code, unit tests, integration tests, scripts, and JavaScript configuration files. Exclusions cover dependency directories, emitted files, generated data, package archives, and tool caches. Authored directories cannot be excluded to hide diagnostics.
+
+All rules below use error severity. TypeScript rules use the prefix `@typescript-eslint/`. The effective rule set retains the recommended correctness rules of the pinned tool versions.
+
+| Rule or group | Required configuration |
+| --- | --- |
+| `no-explicit-any` | Reject explicit `any`. |
+| `no-unsafe-assignment`, `no-unsafe-argument`, `no-unsafe-call`, `no-unsafe-member-access`, `no-unsafe-return` | Reject unsafe use of values typed as `any`. |
+| `no-non-null-assertion`, `no-unnecessary-type-assertion` | Reject unchecked non-null assertions and redundant assertions. |
+| `no-floating-promises` | Use `checkThenables: true`, `ignoreVoid: false`, and `ignoreIIFE: false`. No blanket safe-promise exemptions. |
+| `no-misused-promises` | Check conditionals, spreads, and void-return callbacks. Keep `checksVoidReturn: true`. |
+| `await-thenable` | Reject `await` on a value that is not thenable. |
+| `use-unknown-in-catch-callback-variable` | Use `unknown` for values passed to promise rejection callbacks. |
+| `explicit-module-boundary-types` | Check exported function input and output types. |
+| `consistent-type-imports` | Prefer type imports for type-only dependencies. |
+| `switch-exhaustiveness-check` | Keep `considerDefaultExhaustiveForUnions: false`. A default branch does not replace missing union cases. |
+| `ban-ts-comment` | Apply the suppression policy below. |
+| Core `eqeqeq` | Use strict equality through the `always` option. |
+| Core `curly` | Use braces through the `all` option. |
+| Core `no-var`, `prefer-const`, `no-debugger` | Use block-scoped bindings and remove debugger statements. |
+| Core `no-console` | Apply to runtime modules. Runtime diagnostics use the project's diagnostic adapter. |
+
+Compiler flags own unused TypeScript variable and parameter checks. Duplicate core and TypeScript lint rules for those checks are disabled in the TypeScript scope. JavaScript retains its applicable unused-variable checks.
+
+The lint command uses `--max-warnings 0`. Unused disable directives and unused inline configuration entries are errors. Verification has no `--fix` flag.
+
+The last shared preset is `eslint-config-prettier`. It removes conflicting layout rules. The explicit correctness rules above stay enabled. Prettier runs independently, without an ESLint formatter plugin.
+
+#### Formatter configuration
+
+Prettier uses one root `.prettierrc.json`. The following values define the project style.
+
+| Option | Value |
+| --- | --- |
+| `tabWidth` | `4` |
+| `useTabs` | `false` |
+| `semi` | `true` |
+| `singleQuote` | `false` |
+| `trailingComma` | `all` |
+| `printWidth` | `120` |
+| `endOfLine` | `lf` |
+| `proseWrap` | `preserve` |
+
+The print width is a layout target. It is not a hard limit for strings, URLs, or Markdown tables. Prose wrapping does not replace ASD-STE100 sentence checks.
+
+Formatting covers authored TypeScript, JavaScript, JSON, Markdown, and YAML. `.prettierignore` identifies dependencies, generated output, generated data, VSIX files, caches, and the npm-managed lockfile. An authored file is not ignored to avoid a formatting correction.
+
+The check command uses `--check`. The explicit correction command uses `--write`. Optional editor settings use the same configuration. No contributor needs an additional VS Code extension to run these commands.
+
+#### Coding boundaries and resource cleanup
+
+External data means values from user settings, parsed JSON, extension storage, peer records, or untyped host callbacks. These values use `unknown` until validation establishes the domain type. Validation covers the applicable shape, allowed fields, value ranges, and catalog membership.
+
+Type assertions and non-null assertions do not replace runtime checks. Exported functions state their parameter and return types directly or through a declared function contract. Internal inference remains available where it preserves the checked type.
+
+Finite operation states use literal unions or discriminated unions. State switches include a case for each member. Shared catalogs and captured snapshots use readonly object and array types. Mutable working copies stay in the component that owns their changes.
+
+Readonly types prevent mutation through the declared interface. They do not freeze runtime objects. Component ownership and copies keep stored snapshots isolated from later changes.
+
+Each promise or thenable is awaited, returned to a caller that handles it, or connected to a terminal rejection handler. A `void` expression alone does not handle rejection. Terminal rejection handlers report the failure and do not throw.
+
+The resource owner registers cleanup when it acquires a subscription, timer, UI control, or file handle. Temporary resources end with their operation. Extension-lifetime resources end during normal deactivation. Cleanup also covers failure and cancellation and can safely run more than once.
+
+Pure color modules import only project types, immutable project data, and other pure project modules. Their import graph excludes VS Code, Node.js modules, the settings writer, window coordination, and UI adapters. Runtime inputs supply random values and time when necessary.
+
+Module and symbol names describe their domain purpose. Comments explain non-obvious units, rounding, invariants, side effects, ownership, and cancellation. A comment does not repeat a type or function name without adding useful information.
+
+#### Exceptions and verification
+
+`@ts-ignore` and `@ts-nocheck` are prohibited in authored project code. Only intentional negative type tests use `@ts-expect-error`. It needs an explanation of at least 10 characters and a checked expected error.
+
+A lint suppression names the exact rule and applies to one necessary statement. The adjacent comment explains the exception and identifies a supporting test or external API constraint. Blanket file or project disables are prohibited.
+
+Each rule exception appears in the code quality guide with its location, rule, explanation, and supporting check. Repository checks validate these records and the adjacent comments. Unused suppression comments are errors. A compiler or project-wide rule change updates the design decision and effective configuration together.
+
+Local rule exceptions use the documented review process. They do not authorize a new package or removal of runtime validation. Tests receive the same exception policy as runtime code.
+
+Verification checks the effective configuration and representative failure cases. It confirms that type, lint, and formatting failures stop package creation. Regression evidence repeats the incorrect behavior before checking its correction.
+
 ## 8. Traceability to the design
 
 | Requirement group | Design sections |
@@ -855,6 +1006,7 @@ Updates use a newer VSIX from GitHub Releases. Update instructions state the eff
 | BLD | 13 |
 | DEL | 2, 13 |
 | DOC | 13, 15 |
+| COD | 3, 6, 7, 13 |
 
 Each requirement row also traces directly to a stakeholder need. Engineering decision IDs identify chosen implementation constraints and derived limits. These limits stay reviewable with this draft.
 
@@ -886,3 +1038,13 @@ The implementation verification stays Open until actual evidence exists. Documen
 | [npm clean installation](https://docs.npmjs.com/cli/v11/commands/npm-ci/) | Lockfile-based setup and disabled lifecycle scripts. |
 | [Node.js test runner](https://nodejs.org/api/test.html) | Built-in test execution. |
 | [VS Code integration testing](https://code.visualstudio.com/api/working-with-extensions/testing-extension) | Project test runners and supplied VS Code executables. |
+| [TypeScript compiler options](https://www.typescriptlang.org/tsconfig/) | Strict checking and additional compiler checks. |
+| [TypeScript-aware linting](https://typescript-eslint.io/getting-started/typed-linting/) | Type information and project configuration. |
+| [TypeScript ESLint configurations](https://typescript-eslint.io/users/configs/) | Shared recommended rule sets. |
+| [Promise checks](https://typescript-eslint.io/rules/no-floating-promises/) | Unhandled promises and thenables. |
+| [Promise callback checks](https://typescript-eslint.io/rules/no-misused-promises/) | Asynchronous work in synchronous callbacks. |
+| [State switch checks](https://typescript-eslint.io/rules/switch-exhaustiveness-check/) | Exhaustive handling of union members. |
+| [ESLint CLI](https://eslint.org/docs/latest/use/command-line-interface) | Warning limits and explicit correction commands. |
+| [Prettier integration](https://prettier.io/docs/integrating-with-linters) | Shared use with ESLint. |
+| [Prettier options](https://prettier.io/docs/options) | Project formatting values. |
+| [Prettier CLI](https://prettier.io/docs/cli) | Separate verification and correction modes. |
