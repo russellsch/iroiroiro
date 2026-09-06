@@ -1,5 +1,7 @@
 # iroiro iro (色々色)
 
+<img src="iroiro-icon-256.png" alt="iroiro iro logo" width="64" height="64">
+
 iroiro iro gives each Visual Studio Code workspace a clear color. It colors selected bars and borders, saves the choice with the workspace, and restores it when you return.
 
 This was built with minimal dependencies to reduce security surface area of my VS Code extensions. It's not really intended for consumption by others, but if it helps you out that's great. 

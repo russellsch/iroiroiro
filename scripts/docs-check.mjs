@@ -328,7 +328,8 @@ try {
             if (requiredPackageDocuments.includes(path)) {
                 const packagedTarget = relative(process.cwd(), resolve(targetPath)).replaceAll("\\", "/");
                 report(
-                    requiredPackageDocuments.includes(packagedTarget),
+                    requiredPackageDocuments.includes(packagedTarget) ||
+                        (packagedTarget === manifest.icon && manifest.files?.includes(packagedTarget) === true),
                     `${path} links to ${rawTarget}, which is absent from the VSIX.`,
                     failures,
                 );
