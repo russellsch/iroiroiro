@@ -38,6 +38,3 @@ Status: Unreleased candidate. No `v0.1.0` tag or GitHub Release asset is publish
 - Experimental Modern UI can ignore affected color tokens.
 - Uninstall does not guarantee settings cleanup. Run Reset first or use [manual removal](docs/troubleshooting.md#manual-color-removal).
 - Remaining platform release checks are recorded in the release evidence.
-
-[0.1.1]: https://github.com/russellsch/iroiroiro/releases/tag/v0.1.1
-[0.1.0]: https://github.com/russellsch/iroiroiro/releases/tag/v0.1.0

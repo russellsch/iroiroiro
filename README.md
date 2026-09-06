@@ -2,7 +2,7 @@
 
 iroiro iro gives each Visual Studio Code workspace a clear color. It colors selected bars and borders, saves the choice with the workspace, and restores it when you return.
 
-Requires VS Code 1.104.0 or later on Windows, macOS, or Linux. It also runs locally in Remote SSH, WSL, and Dev Container windows. Browser clients and empty windows are outside the supported scope.
+This was built with minimal dependencies to reduce security surface area of my VS Code extensions. It's not really intended for consumption by others, but if it helps you out that's great. 
 
 ## Install
 
