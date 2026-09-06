@@ -1,14 +1,14 @@
 # iroiro iro: Design
 
-| Item | Value |
-| --- | --- |
-| Document ID | IRO-DES-001 |
-| Revision | 0.3 |
-| Date | 2026-09-05 |
-| Status | Draft for review |
-| Product | iroiro iro (色々色) |
-| Release | 1 |
-| Companion | [Requirements](requirements.md) |
+| Item        | Value                                           |
+| ----------- | ----------------------------------------------- |
+| Document ID | IRO-DES-001                                     |
+| Revision    | 0.5                                             |
+| Date        | 2026-09-05                                      |
+| Status      | Implemented candidate. Verification in progress |
+| Product     | iroiro iro (色々色)                             |
+| Release     | 1                                               |
+| Companion   | [Requirements](requirements.md)                 |
 
 ## 1. Purpose
 
@@ -16,36 +16,37 @@ iroiro iro changes the colors of selected parts of a Visual Studio Code window. 
 
 The user can select a preset, enter a hex code, or request a random color. The extension saves the selected color for that workspace. When the workspace opens again, the extension restores that color.
 
-This document defines the implementation design. The requirements document defines the product obligations, reference data, and verification criteria. This revision contains no implementation results.
+This document defines the implementation design. The requirements document defines the product obligations, reference data, and verification criteria. The [candidate record](releases/0.1.0.md) identifies implementation evidence and remaining verification.
 
 ## 2. Scope and decisions
 
 ### 2.1 User decisions
 
-| Decision | Agreed behavior |
-| --- | --- |
-| U-01 | Deliver a VS Code extension that makes workspace color changes fast and simple. |
-| U-02 | Restore the saved color when a project opens again. |
-| U-03 | Make automatic color assignment optional. Offer preset selection and random generation. |
-| U-04 | Use one primary color. Use related shades where necessary for readability. |
-| U-05 | Support VS Code desktop on Windows, macOS, and Linux. Include Remote SSH, WSL, and Dev Containers. |
-| U-06 | Save workspace colors in `.vscode/settings.json` or a `.code-workspace` file. |
-| U-07 | Apply color to the activity bar, status bar, title bar, and sash hover border by default. |
-| U-08 | Use an open folder or workspace for each color change. |
-| U-09 | Accept custom colors through hex input. Let the user save a color with a name. |
-| U-10 | Prefer different colors for other open workspaces when possible. |
-| U-11 | Supply Command Palette commands, including Lighten and Darken. |
-| U-12 | Let the user select the parts that receive color. |
-| U-13 | Use ASD-STE100 and INCOSE guidance for the documents. |
-| U-14 | Use solid hex colors and live previews. Escape restores the previous appearance. |
-| U-15 | Supply more than 200 built-in color presets with clear English names. |
-| U-16 | Ship no third-party runtime packages. |
-| U-17 | Use TypeScript, VS Code and Node type definitions, and Microsoft's VSIX packager as build tools. Review and lock the full dependency tree. |
-| U-18 | Use GitHub Release VSIX files as the primary install path. Also support installation from a source build. |
-| U-19 | Write installation and other implementation documents with the implemented features. |
-| U-20 | Specify TypeScript code quality checks and coding practices. |
-| U-21 | Add ESLint with TypeScript rules. Review and lock the added dependency tree. |
-| U-22 | Add Prettier with one project configuration. |
+| Decision | Agreed behavior                                                                                                                            |
+| -------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| U-01     | Deliver a VS Code extension that makes workspace color changes fast and simple.                                                            |
+| U-02     | Restore the saved color when a project opens again.                                                                                        |
+| U-03     | Make automatic color assignment optional. Offer preset selection and random generation.                                                    |
+| U-04     | Use one primary color. Use related shades where necessary for readability.                                                                 |
+| U-05     | Support VS Code desktop on Windows, macOS, and Linux. Include Remote SSH, WSL, and Dev Containers.                                         |
+| U-06     | Save workspace colors in `.vscode/settings.json` or a `.code-workspace` file.                                                              |
+| U-07     | Apply color to the activity bar, status bar, title bar, and sash hover border by default.                                                  |
+| U-08     | Use an open folder or workspace for each color change.                                                                                     |
+| U-09     | Accept custom colors through hex input. Let the user save a color with a name.                                                             |
+| U-10     | Prefer different colors for other open workspaces when possible.                                                                           |
+| U-11     | Supply Command Palette commands, including Lighten and Darken.                                                                             |
+| U-12     | Let the user select the parts that receive color.                                                                                          |
+| U-13     | Use ASD-STE100 and INCOSE guidance for the documents.                                                                                      |
+| U-14     | Use solid hex colors and live previews. Escape restores the previous appearance.                                                           |
+| U-15     | Supply more than 200 built-in color presets with clear English names.                                                                      |
+| U-16     | Ship no third-party runtime packages.                                                                                                      |
+| U-17     | Use TypeScript, VS Code and Node type definitions, and Microsoft's VSIX packager as build tools. Review and lock the full dependency tree. |
+| U-18     | Use GitHub Release VSIX files as the primary install path. Also support installation from a source build.                                  |
+| U-19     | Write installation and other implementation documents with the implemented features.                                                       |
+| U-20     | Specify TypeScript code quality checks and coding practices.                                                                               |
+| U-21     | Add ESLint with TypeScript rules. Review and lock the added dependency tree.                                                               |
+| U-22     | Add Prettier with one project configuration.                                                                                               |
+| U-23     | Keep documents brief and refer to source files for build metadata and catalogs. Preserve design detail.                                    |
 
 U-14 was the stated default in the readiness message. The user then approved document preparation.
 
@@ -55,27 +56,27 @@ The extension applies color to the activity bar, status bar, title bar, and sash
 
 These decisions define details that the user did not specify. They stay subject to review with this draft.
 
-| ID | Decision | Rationale |
-| --- | --- | --- |
-| D-01 | Use TypeScript and the stable VS Code extension API. Set the minimum VS Code version to 1.104.0. | One implementation can operate in the desktop environments in scope. |
-| D-02 | Run as a local UI extension. | The local host can coordinate local and remote workspace windows. |
-| D-03 | Use native Quick Pick, Input Box, settings, and status bar controls. | The user can do common tasks with the keyboard. |
-| D-04 | Use the fixed presets in requirements Catalog P. Store custom presets in user settings. | Presets stay available across projects in the current profile. |
-| D-05 | Use five HSL lightness percentage points as the default adjustment step. Accept integer steps from 1 through 10. | Small steps help the user change colors. |
-| D-06 | Select black or white text from the contrast calculation in Section 9. | The calculation uses a known solid background. |
-| D-07 | Use local records for color differences across participating windows. | No account or extension network service is necessary. |
-| D-08 | Record prior settings before the first extension write. Restore only values that still match an extension write. | Recovery can keep user changes that occur after an extension write. |
-| D-09 | Keep 20 completed appearance changes in Undo history for the current window session. | The user can recover from repeated color adjustments. |
-| D-10 | Reset clears the workspace color and disables automatic assignment for that workspace. | The next startup does not immediately replace the Reset result. |
-| D-11 | Keep the theme colors for debugger, error, warning, and remote status indicators. | These indicators show states other than workspace identity. |
-| D-12 | Use the timing limits in requirements Profile T. | The user target "quick" must have a measurable acceptance criterion. |
-| D-13 | Compile TypeScript into project JavaScript modules. Use Node.js built-in test and assertion modules. | Unit tests need no additional test framework. |
-| D-14 | Use the build commands and package contents in requirements Contract B. | Local contributors and release preparation use the same process. |
-| D-15 | Supply the implementation documents in requirements Catalog D. | Installation, use, recovery, and maintenance need verified instructions. |
-| D-16 | Use manual VSIX updates from GitHub Releases. | Updates use the chosen delivery path without an extension update service. |
-| D-17 | Use the compiler flags and coding practices in requirements Contract Q. | Static checks identify invalid settings data and operation state. |
-| D-18 | Use ESLint with type information and the explicit rules in Contract Q. Treat warnings as failures. | Lint checks identify errors beyond compiler diagnostics. |
-| D-19 | Use Prettier for formatting and separate commands for automatic corrections. | Normal verification keeps source files unchanged. |
+| ID   | Decision                                                                                                         | Rationale                                                                 |
+| ---- | ---------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
+| D-01 | Use TypeScript and the stable VS Code extension API. Set the minimum VS Code version to 1.104.0.                 | One implementation can operate in the desktop environments in scope.      |
+| D-02 | Run as a local UI extension.                                                                                     | The local host can coordinate local and remote workspace windows.         |
+| D-03 | Use native Quick Pick, Input Box, settings, and status bar controls.                                             | The user can do common tasks with the keyboard.                           |
+| D-04 | Use the fixed presets in requirements Catalog P. Store custom presets in user settings.                          | Presets stay available across projects in the current profile.            |
+| D-05 | Use five HSL lightness percentage points as the default adjustment step. Accept integer steps from 1 through 10. | Small steps help the user change colors.                                  |
+| D-06 | Select black or white text from the contrast calculation in Section 9.                                           | The calculation uses a known solid background.                            |
+| D-07 | Use local records for color differences across participating windows.                                            | No account or extension network service is necessary.                     |
+| D-08 | Record prior settings before the first extension write. Restore only values that still match an extension write. | Recovery can keep user changes that occur after an extension write.       |
+| D-09 | Keep 20 completed appearance changes in Undo history for the current window session.                             | The user can recover from repeated color adjustments.                     |
+| D-10 | Reset clears the workspace color and disables automatic assignment for that workspace.                           | The next startup does not immediately replace the Reset result.           |
+| D-11 | Keep the theme colors for debugger, error, warning, and remote status indicators.                                | These indicators show states other than workspace identity.               |
+| D-12 | Use the timing limits in requirements Profile T.                                                                 | The user target "quick" must have a measurable acceptance criterion.      |
+| D-13 | Compile TypeScript into project JavaScript modules. Use Node.js built-in test and assertion modules.             | Unit tests need no additional test framework.                             |
+| D-14 | Use the build commands and package contents in requirements Contract B.                                          | Local contributors and release preparation use the same process.          |
+| D-15 | Supply the implementation documents in requirements Catalog D.                                                   | Installation, use, recovery, and maintenance need verified instructions.  |
+| D-16 | Use manual VSIX updates from GitHub Releases.                                                                    | Updates use the chosen delivery path without an extension update service. |
+| D-17 | Use the compiler flags and coding practices in requirements Contract Q.                                          | Static checks identify invalid settings data and operation state.         |
+| D-18 | Use ESLint with type information and the explicit rules in Contract Q. Treat warnings as failures.               | Lint checks identify errors beyond compiler diagnostics.                  |
+| D-19 | Use Prettier for formatting and separate commands for automatic corrections.                                     | Normal verification keeps source files unchanged.                         |
 
 ### 2.3 Scope limits
 
@@ -110,16 +111,16 @@ flowchart TD
   Controller --> Status[Status and error messages]
 ```
 
-| Component | Responsibility |
-| --- | --- |
-| Operation controller | Orders appearance operations and tracks the active preview. |
-| Preset service | Reads the fixed palette and validates custom presets. |
-| Color engine | Converts hex input, calculates shades, selects foregrounds, and compares colors. |
-| Surface registry | Maps each selected part to a fixed set of VS Code color keys. |
-| Settings writer | Prepares changes to owned keys and records prior values. |
-| Recovery journal | Records incomplete operations and the last completed appearance. |
-| Window records | Supplies a recent view of colors in other participating windows. |
-| Status adapter | Shows the current name, hex code, and actionable failures. |
+| Component            | Responsibility                                                                   |
+| -------------------- | -------------------------------------------------------------------------------- |
+| Operation controller | Orders appearance operations and tracks the active preview.                      |
+| Preset service       | Reads the fixed palette and validates custom presets.                            |
+| Color engine         | Converts hex input, calculates shades, selects foregrounds, and compares colors. |
+| Surface registry     | Maps each selected part to a fixed set of VS Code color keys.                    |
+| Settings writer      | Prepares changes to owned keys and records prior values.                         |
+| Recovery journal     | Records incomplete operations and the last completed appearance.                 |
+| Window records       | Supplies a recent view of colors in other participating windows.                 |
+| Status adapter       | Shows the current name, hex code, and actionable failures.                       |
 
 The color engine has no VS Code dependency. Its inputs and outputs are plain data. Tests can supply a fixed random number source and a fixed clock.
 
@@ -217,18 +218,18 @@ If a prior value is unknown, Reset removes an owned override only when its value
 
 All keys use the prefix `iroiroIro`. A workspace color always has workspace scope. General preferences use VS Code user settings with workspace overrides.
 
-| Key after the prefix | Type | Default | Scope |
-| --- | --- | --- | --- |
-| `color` | String | Empty string | Explicit workspace value only |
-| `autoColor.enabled` | Boolean | `false` | User and workspace |
-| `autoColor.source` | `presets` or `generated` | `presets` | User and workspace |
-| `preferDistinctColors` | Boolean | `true` | User and workspace |
-| `adjustmentStep` | Integer, 1 through 10 | `5` | User and workspace |
-| `coloredParts` | Object of part IDs and booleans | Requirements Catalog S | User and workspace |
-| `adjustments` | Object of bar IDs and shade modes | Activity bar `lighten`, other bars `none` | User and workspace |
-| `presets` | Array of name and value objects | Empty array | User |
-| `preview.enabled` | Boolean | `true` | User and workspace |
-| `statusBarItem.enabled` | Boolean | `true` | User and workspace |
+| Key after the prefix    | Type                              | Default                                   | Scope                         |
+| ----------------------- | --------------------------------- | ----------------------------------------- | ----------------------------- |
+| `color`                 | String                            | Empty string                              | Explicit workspace value only |
+| `autoColor.enabled`     | Boolean                           | `false`                                   | User and workspace            |
+| `autoColor.source`      | `presets` or `generated`          | `presets`                                 | User and workspace            |
+| `preferDistinctColors`  | Boolean                           | `true`                                    | User and workspace            |
+| `adjustmentStep`        | Integer, 1 through 10             | `5`                                       | User and workspace            |
+| `coloredParts`          | Object of part IDs and booleans   | Requirements Catalog S                    | User and workspace            |
+| `adjustments`           | Object of bar IDs and shade modes | Activity bar `lighten`, other bars `none` | User and workspace            |
+| `presets`               | Array of name and value objects   | Empty array                               | User                          |
+| `preview.enabled`       | Boolean                           | `true`                                    | User and workspace            |
+| `statusBarItem.enabled` | Boolean                           | `true`                                    | User and workspace            |
 
 `adjustments` accepts `activityBar`, `titleBar`, and `statusBar`. Each value is `none`, `lighten`, or `darken`. The configured step also controls these shade adjustments.
 
@@ -248,15 +249,15 @@ The Settings Sync service can synchronize user preferences and custom presets. W
 
 ### 6.1 Storage locations
 
-| Data | Location | Lifetime |
-| --- | --- | --- |
-| Primary color | Workspace `iroiroIro.color` | Until replacement or Reset |
-| Rendered color values | Workspace `workbench.colorCustomizations` | Until replacement or restoration |
-| User presets | User `iroiroIro.presets` | Until user removal |
-| Prior values and recovery journal | Extension `workspaceState` | Until successful restoration and journal cleanup |
-| Undo history | Extension memory | Current window session |
-| Window records | `globalStorageUri/active/v1/` | Current participation plus expiry interval |
-| Diagnostics | VS Code log output | Host log retention |
+| Data                              | Location                                  | Lifetime                                         |
+| --------------------------------- | ----------------------------------------- | ------------------------------------------------ |
+| Primary color                     | Workspace `iroiroIro.color`               | Until replacement or Reset                       |
+| Rendered color values             | Workspace `workbench.colorCustomizations` | Until replacement or restoration                 |
+| User presets                      | User `iroiroIro.presets`                  | Until user removal                               |
+| Prior values and recovery journal | Extension `workspaceState`                | Until successful restoration and journal cleanup |
+| Undo history                      | Extension memory                          | Current window session                           |
+| Window records                    | `globalStorageUri/active/v1/`             | Current participation plus expiry interval       |
+| Diagnostics                       | VS Code log output                        | Host log retention                               |
 
 An untitled workspace uses its VS Code workspace configuration. The extension does not add a project folder for an empty window. A failure to save an untitled workspace configuration uses the normal write failure path.
 
@@ -265,29 +266,32 @@ An untitled workspace uses its VS Code workspace configuration. The extension do
 The following schema describes internal data. It is not an additional user setting.
 
 ```typescript
-type StoredValue =
-  | { present: false }
-  | { present: true; value: unknown };
+type StoredValue = { readonly present: false } | { readonly present: true; readonly value: unknown };
 
 interface OwnedEntry {
-  path: string[];
-  before: StoredValue;
-  lastWritten: StoredValue;
+    readonly path: readonly string[];
+    readonly before: StoredValue;
+    readonly lastWritten: StoredValue;
 }
 
 interface AppearanceSnapshot {
-  color: StoredValue;
-  owned: OwnedEntry[];
-  workspacePreferences: Record<string, StoredValue>;
+    readonly color: StoredValue;
+    readonly owned: readonly OwnedEntry[];
+    readonly workspacePreferences: Readonly<Record<string, StoredValue>>;
+}
+
+interface AttemptedWrite {
+    readonly path: readonly string[];
+    readonly value: StoredValue;
 }
 
 interface RecoveryJournal {
-  schemaVersion: 1;
-  operationId: string;
-  phase: "prepared" | "preview" | "committing" | "complete";
-  base: AppearanceSnapshot;
-  intended: AppearanceSnapshot;
-  attemptedWrites: Record<string, StoredValue[]>;
+    readonly schemaVersion: 1;
+    readonly operationId: string;
+    readonly phase: "prepared" | "preview" | "committing" | "complete";
+    readonly base: AppearanceSnapshot;
+    readonly intended: AppearanceSnapshot;
+    readonly attemptedWrites: readonly AttemptedWrite[];
 }
 ```
 
@@ -297,10 +301,10 @@ The complete workspace record has this structure:
 
 ```typescript
 interface WorkspaceRecord {
-  schemaVersion: 1;
-  revision: string;
-  committed: AppearanceSnapshot;
-  pending?: RecoveryJournal;
+    readonly schemaVersion: 1;
+    readonly revision: string;
+    readonly committed: AppearanceSnapshot;
+    readonly pending?: RecoveryJournal;
 }
 ```
 
@@ -378,21 +382,21 @@ If the user enables automatic assignment in an eligible open workspace, the same
 
 ### 7.2 State transitions
 
-| State | Event | Next state and action |
-| --- | --- | --- |
-| Ineligible | A folder workspace opens | Read configuration and enter Idle. |
-| Idle | A picker opens | Save the snapshot and enter Preview. |
-| Preview | Valid selection changes | Replace the pending preview request. |
-| Preview | Enter | Finish the latest write and enter Commit. |
-| Preview | Escape or dismissal | Discard pending requests and enter Restore. |
-| Idle | Random, Lighten, or Darken | Prepare the selected change and enter Commit. |
-| Idle | Reset or Undo | Prepare the target snapshot and enter Restore. |
-| Commit | All writes and readback succeed | Record history and enter Idle. |
-| Commit | A write fails | Enter Restore with the original snapshot. |
-| Restore | Restoration succeeds | Clear the pending journal, keep the ownership baseline, and enter Idle. |
-| Restore | Restoration fails | Keep the journal and enter Recovery blocked. |
-| Recovery blocked | The user selects Retry Recovery | Retry restoration. |
-| Idle or Preview | An owned value changes externally | Cancel the preview and enter Conflict for that part. |
+| State            | Event                             | Next state and action                                                   |
+| ---------------- | --------------------------------- | ----------------------------------------------------------------------- |
+| Ineligible       | A folder workspace opens          | Read configuration and enter Idle.                                      |
+| Idle             | A picker opens                    | Save the snapshot and enter Preview.                                    |
+| Preview          | Valid selection changes           | Replace the pending preview request.                                    |
+| Preview          | Enter                             | Finish the latest write and enter Commit.                               |
+| Preview          | Escape or dismissal               | Discard pending requests and enter Restore.                             |
+| Idle             | Random, Lighten, or Darken        | Prepare the selected change and enter Commit.                           |
+| Idle             | Reset or Undo                     | Prepare the target snapshot and enter Restore.                          |
+| Commit           | All writes and readback succeed   | Record history and enter Idle.                                          |
+| Commit           | A write fails                     | Enter Restore with the original snapshot.                               |
+| Restore          | Restoration succeeds              | Clear the pending journal, keep the ownership baseline, and enter Idle. |
+| Restore          | Restoration fails                 | Keep the journal and enter Recovery blocked.                            |
+| Recovery blocked | The user selects Retry Recovery   | Retry restoration.                                                      |
+| Idle or Preview  | An owned value changes externally | Cancel the preview and enter Conflict for that part.                    |
 
 Conflict is a part-level state. Other parts can continue to show their saved colors. A manual color choice explicitly reacquires the selected parts from their current values.
 
@@ -405,6 +409,8 @@ After color readback succeeds, the writer updates the primary color and operatio
 A completed operation updates the status bar item, Undo history, and window record. A failed operation does not display a success result.
 
 On the next activation, a complete journal supplies the ownership baseline. An incomplete journal triggers conditional restoration before automatic assignment.
+
+A durable complete journal is authoritative. If final journal cleanup fails, the writer keeps the completed appearance and history. It retries cleanup before another operation. It does not roll back an operation whose completion record was saved.
 
 A picker cancellation cannot stop a configuration write that VS Code received. The controller waits for that write, then restores the snapshot. No previous preview request can run after restoration.
 
@@ -434,13 +440,13 @@ Records do not coordinate separate computers or separate storage directories. Th
 
 ```typescript
 interface WindowRecord {
-  schemaVersion: 1;
-  instanceId: string;
-  workspaceKey: string;
-  color: string;
-  phase: "reservation" | "committed";
-  updatedAtMs: number;
-  expiresAtMs: number;
+    schemaVersion: 1;
+    instanceId: string;
+    workspaceKey: string;
+    color: string;
+    phase: "reservation" | "committed";
+    updatedAtMs: number;
+    expiresAtMs: number;
 }
 ```
 
@@ -459,6 +465,8 @@ The extension removes its record during its `deactivate` callback. Expiry remove
 ### 8.3 Selection rule
 
 The color engine converts candidates and recorded colors to OKLab. The distance is the Euclidean distance between their OKLab coordinates. This project uses a distance of 0.10 as its preferred separation target.
+
+Each selection call converts each canonical color once. The call reuses those coordinates for its distance comparisons. This local cache keeps no state between operations.
 
 This threshold is an engineering heuristic. It does not guarantee that each user can distinguish the colors. Names and hex codes stay available as text.
 
@@ -483,6 +491,8 @@ After three attempts, the instance uses the best available candidate. A coordina
 Reservations expire after 10 seconds. A completed appearance operation converts the reservation to a committed record. An operation that fails or is canceled removes the reservation.
 
 After reservation removal, the instance publishes its previous committed color if one exists.
+
+Selection and its next publication share one 250 ms deadline. A timeout ends the wait even if a storage operation remains pending. Each pending promise has a rejection handler. Serialized writes check the current operation before and after rename. A superseded write removes its stale record before a newer publication proceeds.
 
 ## 9. Color calculations
 
@@ -552,22 +562,22 @@ Requirements Catalog S defines the available part IDs and defaults. The followin
 
 In this table, `B` is the applicable bar shade, `F` is its selected foreground, and `P` is the primary color.
 
-| Part ID | Keys and values |
-| --- | --- |
-| `activityBar` | `activityBar.background = B`, `activityBar.activeBackground = B`, `activityBar.foreground = F`, `activityBar.inactiveForeground = F`, `activityBar.activeBorder = F`, `activityBar.activeFocusBorder = F` |
-| `activityBar`, related badge | `activityBarBadge.background = F`, `activityBarBadge.foreground = B` |
-| `activityBar`, top or bottom position | `activityBarTop.background = B`, `activityBarTop.activeBackground = B`, `activityBarTop.foreground = F`, `activityBarTop.inactiveForeground = F`, `activityBarTop.activeBorder = F` |
-| `titleBar` | `titleBar.activeBackground = B`, `titleBar.inactiveBackground = B`, `titleBar.activeForeground = F`, `titleBar.inactiveForeground = F` |
-| `titleBar`, related Command Center | `commandCenter.background = B`, `commandCenter.activeBackground = B`, `commandCenter.foreground = F`, `commandCenter.activeForeground = F`, `commandCenter.inactiveForeground = F`, `commandCenter.border = F`, `commandCenter.activeBorder = F`, `commandCenter.inactiveBorder = F` |
-| `statusBar` | `statusBar.background = B`, `statusBar.foreground = F`, `statusBarItem.hoverBackground = B`, `statusBarItem.hoverForeground = F`, `statusBarItem.activeBackground = B` |
-| `sashHover` | `sash.hoverBorder = P` |
-| `editorGroupBorder` | `editorGroup.border = P` |
-| `panelBorder` | `panel.border = P` |
-| `sideBarBorder` | `sideBar.border = P` |
-| `statusBarBorder` | `statusBar.border = P` |
-| `titleBarBorder` | `titleBar.border = P` |
-| `tabActiveBorder` | `tab.activeBorder = P`, `tab.unfocusedActiveBorder = P`, `tab.activeBorderTop = P`, `tab.unfocusedActiveBorderTop = P` |
-| `windowBorder` | `window.activeBorder = P`, `window.inactiveBorder = P` |
+| Part ID                               | Keys and values                                                                                                                                                                                                                                                                      |
+| ------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `activityBar`                         | `activityBar.background = B`, `activityBar.activeBackground = B`, `activityBar.foreground = F`, `activityBar.inactiveForeground = F`, `activityBar.activeBorder = F`, `activityBar.activeFocusBorder = F`                                                                            |
+| `activityBar`, related badge          | `activityBarBadge.background = F`, `activityBarBadge.foreground = B`                                                                                                                                                                                                                 |
+| `activityBar`, top or bottom position | `activityBarTop.background = B`, `activityBarTop.activeBackground = B`, `activityBarTop.foreground = F`, `activityBarTop.inactiveForeground = F`, `activityBarTop.activeBorder = F`                                                                                                  |
+| `titleBar`                            | `titleBar.activeBackground = B`, `titleBar.inactiveBackground = B`, `titleBar.activeForeground = F`, `titleBar.inactiveForeground = F`                                                                                                                                               |
+| `titleBar`, related Command Center    | `commandCenter.background = B`, `commandCenter.activeBackground = B`, `commandCenter.foreground = F`, `commandCenter.activeForeground = F`, `commandCenter.inactiveForeground = F`, `commandCenter.border = F`, `commandCenter.activeBorder = F`, `commandCenter.inactiveBorder = F` |
+| `statusBar`                           | `statusBar.background = B`, `statusBar.foreground = F`, `statusBarItem.hoverBackground = B`, `statusBarItem.hoverForeground = F`, `statusBarItem.activeBackground = B`                                                                                                               |
+| `sashHover`                           | `sash.hoverBorder = P`                                                                                                                                                                                                                                                               |
+| `editorGroupBorder`                   | `editorGroup.border = P`                                                                                                                                                                                                                                                             |
+| `panelBorder`                         | `panel.border = P`                                                                                                                                                                                                                                                                   |
+| `sideBarBorder`                       | `sideBar.border = P`                                                                                                                                                                                                                                                                 |
+| `statusBarBorder`                     | `statusBar.border = P`                                                                                                                                                                                                                                                               |
+| `titleBarBorder`                      | `titleBar.border = P`                                                                                                                                                                                                                                                                |
+| `tabActiveBorder`                     | `tab.activeBorder = P`, `tab.unfocusedActiveBorder = P`, `tab.activeBorderTop = P`, `tab.unfocusedActiveBorderTop = P`                                                                                                                                                               |
+| `windowBorder`                        | `window.activeBorder = P`, `window.inactiveBorder = P`                                                                                                                                                                                                                               |
 
 The registry excludes debugger, error, warning, remote, and prominent status item colors. It also excludes error badges, warning badges, syntax colors, and editor backgrounds.
 
@@ -575,14 +585,14 @@ The extension does not control border width. The sash color appears during hover
 
 ### 10.1 Host conditions
 
-| Host condition | Behavior |
-| --- | --- |
-| Custom title bar | Apply the title bar group when selected. |
-| Native title bar | Skip title bar backgrounds and foregrounds that the operating system owns. Show the limitation in Choose Colored Parts. |
-| macOS or Linux window border | Apply when the host uses the custom title bar. |
-| Windows window border | Apply on VS Code 1.104 or later when `window.border` is `default`. |
-| A hidden or unsupported color key | Keep the preference unchanged. Explain the known limitation. |
-| Experimental Modern UI | Treat affected color controls as unsupported until the release verification proves that their tokens operate correctly. |
+| Host condition                    | Behavior                                                                                                                |
+| --------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| Custom title bar                  | Apply the title bar group when selected.                                                                                |
+| Native title bar                  | Skip title bar backgrounds and foregrounds that the operating system owns. Show the limitation in Choose Colored Parts. |
+| macOS or Linux window border      | Apply when the host uses the custom title bar.                                                                          |
+| Windows window border             | Apply on VS Code 1.104 or later when `window.border` is `default`.                                                      |
+| A hidden or unsupported color key | Keep the preference unchanged. Explain the known limitation.                                                            |
+| Experimental Modern UI            | Treat affected color controls as unsupported until the release verification proves that their tokens operate correctly. |
 
 VS Code 1.104 introduced window border colors on Windows. The older restriction in the color reference conflicts with these release notes. The release notes are the reference for this design. [VS Code 1.104](https://code.visualstudio.com/updates/v1_104#_window-border-color-support-on-windows)
 
@@ -592,17 +602,17 @@ Modern UI has an upstream report about ignored color tokens. The release verific
 
 ## 11. Failure behavior
 
-| Condition | User result | Data result |
-| --- | --- | --- |
-| No folder workspace | A message asks the user to open a folder or workspace. | No color write. |
-| Invalid hex input | An inline error identifies the permitted format. | No new preview or saved color. |
-| No current primary color | Lighten, Darken, and Save Current Color offer Choose Color. | No saved change. |
-| Settings are read-only or unavailable | A message identifies the failed operation and offers Retry. | Conditional restoration starts if a write occurred. |
-| Settings contain invalid JSON | A message offers Open Workspace Settings. | No replacement settings file. |
-| Restoration fails | A persistent status message offers Retry Recovery. | The journal stays available. |
-| An external writer changes an owned value | A message identifies the affected part. | The external value stays outside automatic ownership. |
-| Local coordination fails | The random command still selects a color. | The log records the reduced coordination. |
-| The host ignores a selected token | A known limitation appears in the part description. | The extension does not change host layout settings. |
+| Condition                                 | User result                                                 | Data result                                           |
+| ----------------------------------------- | ----------------------------------------------------------- | ----------------------------------------------------- |
+| No folder workspace                       | A message asks the user to open a folder or workspace.      | No color write.                                       |
+| Invalid hex input                         | An inline error identifies the permitted format.            | No new preview or saved color.                        |
+| No current primary color                  | Lighten, Darken, and Save Current Color offer Choose Color. | No saved change.                                      |
+| Settings are read-only or unavailable     | A message identifies the failed operation and offers Retry. | Conditional restoration starts if a write occurred.   |
+| Settings contain invalid JSON             | A message offers Open Workspace Settings.                   | No replacement settings file.                         |
+| Restoration fails                         | A persistent status message offers Retry Recovery.          | The journal stays available.                          |
+| An external writer changes an owned value | A message identifies the affected part.                     | The external value stays outside automatic ownership. |
+| Local coordination fails                  | The random command still selects a color.                   | The log records the reduced coordination.             |
+| The host ignores a selected token         | A known limitation appears in the part description.         | The extension does not change host layout settings.   |
 
 Successful color changes use the status bar item, not a notification toast. Automatic assignment does not open a picker. Repeated identical failures give one notification per activation and condition.
 
@@ -642,27 +652,27 @@ Each step also updates the documents for the behavior that it implements. Instal
 
 ### 13.2 Verification groups
 
-| Group | Evidence |
-| --- | --- |
-| Pure color functions | Hex vectors, HSL boundaries, contrast vectors, and fixed random selection cases. |
-| Preset service | Catalog P names and values, name collisions, Unicode cases, invalid entries, and the 1,000-entry limit. |
-| Settings writer | Absent values, prior values, nested theme selectors, and unrelated settings. |
-| Fault injection | Failure before and after each write, cancellation during a write, and restart from each journal phase. |
-| Native user controls | Keyboard operation, screen reader labels, preview behavior, and command discovery. |
-| Multiple windows | Concurrent assignments, expired records, identical workspace identities, and missing coordination storage. |
-| Remote integration | Workspace writes through SSH, WSL, and containers with a local UI host. |
-| Visual inspection | Each selected part, theme kind, activity bar position, and applicable host restriction. |
-| Performance | The measured percentiles and event boundaries in Profile T. |
-| Build tools | Approved direct tools, the reviewed dependency tree, exact versions, and the committed lockfile. |
-| Code quality | Compiler flags, typed lint coverage, formatting, external-data validation, resource cleanup, and recorded exceptions. |
-| Package delivery | Package contents, GitHub assets, checksums, offline installation, source installation, and preserved settings after an update. |
-| Implementation documents | Catalog D coverage, usable commands, valid examples, working links, and the project writing rules. |
+| Group                    | Evidence                                                                                                                       |
+| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------ |
+| Pure color functions     | Hex vectors, HSL boundaries, contrast vectors, and fixed random selection cases.                                               |
+| Preset service           | Catalog P names and values, name collisions, Unicode cases, invalid entries, and the 1,000-entry limit.                        |
+| Settings writer          | Absent values, prior values, nested theme selectors, and unrelated settings.                                                   |
+| Fault injection          | Failure before and after each write, cancellation during a write, and restart from each journal phase.                         |
+| Native user controls     | Keyboard operation, screen reader labels, preview behavior, and command discovery.                                             |
+| Multiple windows         | Concurrent assignments, expired records, identical workspace identities, and missing coordination storage.                     |
+| Remote integration       | Workspace writes through SSH, WSL, and containers with a local UI host.                                                        |
+| Visual inspection        | Each selected part, theme kind, activity bar position, and applicable host restriction.                                        |
+| Performance              | The measured percentiles and event boundaries in Profile T.                                                                    |
+| Build tools              | Approved direct tools, dependency review decisions, and the committed lockfile.                                                |
+| Code quality             | Compiler flags, typed lint coverage, formatting, external-data validation, resource cleanup, and recorded exceptions.          |
+| Package delivery         | Package contents, GitHub assets, checksums, offline installation, source installation, and preserved settings after an update. |
+| Implementation documents | Catalog D coverage, usable commands, valid examples, working links, and the project writing rules.                             |
 
 The implementation records a result for each requirement. A skipped platform check stays open and identifies its blocking condition. A unit test with a Pass result does not replace a necessary visual or remote check.
 
 ### 13.3 Release evidence
 
-The release record contains the VS Code version, operating system version, test configuration, and VSIX hash. It links each requirement ID to its verification result.
+The release record links generated environment and artifact evidence. A linked CSV can trace each requirement ID to its verification result.
 
 Publication needs a separate release decision. The owner supplies the GitHub repository URL, manifest publisher ID, and license before the first release. Release preparation records these values.
 
@@ -674,9 +684,9 @@ Local package checks finish before publication. Final delivery checks verify the
 
 Requirements Contract B defines the approved direct tools and source commands. The list includes compilation, type definitions, VSIX packaging, ESLint with TypeScript rules, and Prettier. Supporting ESLint configurations are listed explicitly.
 
-Implementation selects exact versions that work together. The VS Code type definitions match the minimum supported API. The compiler uses strict checking and stops emission on an error. [TypeScript strict checking](https://www.typescriptlang.org/tsconfig/strict.html), [emission on error](https://www.typescriptlang.org/tsconfig/noEmitOnError.html)
+The manifest selects compatible tool versions. The VS Code type definitions match the minimum supported API. The compiler uses strict checking and stops emission on an error. [TypeScript strict checking](https://www.typescriptlang.org/tsconfig/strict.html), [emission on error](https://www.typescriptlang.org/tsconfig/noEmitOnError.html)
 
-The build-tool review covers the full dependency tree, including optional and transitive packages. It records package counts, sources, integrity values, known advisories, and the disposition of each concern. The record identifies the reviewed lockfile by its SHA-256 hash.
+The build-tool review covers the full dependency tree, including optional and transitive packages. It examines the lockfile diff, sources, integrity values, advisories, and installation scripts. The change review records decisions and unresolved concerns. Exact versions and dependency metadata stay in `package.json` and `package-lock.json`.
 
 The user has approved the direct tool names. A new direct tool requires an explicit user decision. Version changes and transitive changes need a new recorded review of the resulting tree.
 
@@ -688,13 +698,19 @@ Unit tests use `node:test` and `node:assert`. Integration tests use a project ru
 
 The integration runner uses separate test profiles and temporary workspaces. It reports failures through a nonzero exit code. Release verification supplies the exact hosts required by Matrix E.
 
+The runner can also install a specified VSIX in each temporary profile. This mode uses a separate test driver and records the installed artifact's checksum. The source extension cannot replace the installed package during this check.
+
 The package command checks types, lint, formatting, tests, and documents before it creates a candidate VSIX. The installed packager uses `--no-dependencies` and the release file list. Package inspection also checks for combined or copied third-party runtime code.
+
+Packaging copies the release files into a temporary staging directory. Only staged guide links change to match the packager's `readme.md`, `changelog.md`, and `LICENSE.txt` names. The packager keeps relative links. Archive inspection validates the actual packaged paths and anchors. Repository guide links keep their source filenames.
 
 After dependency setup, the offline commands in Contract B need no network access. Source acquisition and initial tool downloads can use the network. Local package creation needs no GitHub credential or release service.
 
 ### 13.5 GitHub installation and updates
 
 Each release supplies `iroiro-iro-<version>.vsix` and `SHA256SUMS` as GitHub Release assets. One VSIX serves all desktop environments in Matrix E. The source tag uses `v<version>`.
+
+The GitHub Actions release workflow starts when a release or pre-release is published. It checks out the release commit, verifies the tag against the manifest version, installs the locked tools without lifecycle scripts, and runs `npm run package`. A successful build uploads both assets with GitHub's automatic token and verifies their downloaded checksum. GitHub actions use fixed commit references. An upload retry replaces only these two assets. This workflow requires mutable releases.
 
 The primary instructions start with the release page and identify the VSIX asset. GitHub source ZIP and TAR files are source archives. The source build instructions explain their separate purpose. [GitHub release links](https://docs.github.com/en/repositories/releasing-projects-on-github/linking-to-releases)
 
@@ -714,11 +730,11 @@ Reset and uninstall instructions keep the recovery rules in Section 7.4. Install
 
 Requirements Catalog D defines the document paths and required content. Implementation creates the missing files and updates the current design and requirements as behavior changes.
 
-The repository README presents the GitHub VSIX path first. It links to complete installation, user, settings, and troubleshooting guides. Contributor instructions identify the exact build prerequisites and source commands.
+The repository README presents the GitHub VSIX path first. It links to complete installation, user, settings, and troubleshooting guides. Contributor instructions identify supported build prerequisites and source commands.
 
 The user guides contain complete text instructions. Packaged guides use local assets. Instructional images have text alternatives and do not replace a necessary step.
 
-The command reference covers all 17 commands. The settings reference covers each property, its type, default, scope, accepted values, and invalid-input behavior. The user guide contains a generated reference for the 240 built-in names and values. This reference matches Catalog P.
+The command reference covers all 17 commands. The settings reference covers each property, its type, default, scope, accepted values, and invalid-input behavior. Catalog P refers to the canonical preset data in source. Choose Color displays the complete list.
 
 Document checks compare references with the manifest, schemas, and color catalogs. They parse configuration examples and check internal links. A release review verifies external installation links and follows the two installation paths on the stated hosts.
 
@@ -758,16 +774,16 @@ Rule exceptions identify the exact rule, affected line, explanation, and support
 
 ## 14. Alternatives and residual risks
 
-| Topic | Selected approach | Alternative and tradeoff |
-| --- | --- | --- |
-| Color storage | Workspace settings | User settings apply too broadly for stable workspace identity. |
-| Color controls | Native pickers and hex input | A webview color wheel adds a different interface that Release 1 does not need. |
-| Automatic colors | Saved assignment after the first choice | A new choice at each startup conflicts with U-02. |
-| Color differences | Local records with bounded retries | A central service adds network and account dependencies. |
-| Settings changes | Supported configuration API | Direct edits to VS Code internals use private behavior. |
-| Shade adjustment | HSL lightness | Perceptual lightness could give more uniform steps but differs from a simple percentage control. |
+| Topic             | Selected approach                       | Alternative and tradeoff                                                                         |
+| ----------------- | --------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| Color storage     | Workspace settings                      | User settings apply too broadly for stable workspace identity.                                   |
+| Color controls    | Native pickers and hex input            | A webview color wheel adds a different interface that Release 1 does not need.                   |
+| Automatic colors  | Saved assignment after the first choice | A new choice at each startup conflicts with U-02.                                                |
+| Color differences | Local records with bounded retries      | A central service adds network and account dependencies.                                         |
+| Settings changes  | Supported configuration API             | Direct edits to VS Code internals use private behavior.                                          |
+| Shade adjustment  | HSL lightness                           | Perceptual lightness could give more uniform steps but differs from a simple percentage control. |
 
-The first implementation validates the journal behavior with actual VS Code settings events. Cross-window `workspaceState` timing has a focused integration check. The controller identifies unexpected journal changes as a conflict and stops its writes.
+Local integration checks exercise the journal with actual VS Code settings events. Cross-window `workspaceState` timing still needs the focused release check. The writer identifies unexpected journal revisions as a conflict and stops its writes.
 
 The settings API cannot make atomic changes across multiple settings or independent extensions. Recovery stays conditional, and external concurrent writers stay a known limitation.
 
@@ -779,11 +795,11 @@ The document uses ASD-STE100 Issue 9 for prose. It uses short sentences, active 
 
 The requirements document contains the shared terminology register. API identifiers, setting keys, command titles, and equations keep their exact technical forms. INCOSE guidance supplies the requirement structure and quality checks.
 
-| Reference | Use |
-| --- | --- |
-| [ASD-STE100 Issue 9](https://www.asd-ste100.org/assets/files/ASD-STE100_ISSUE9.pdf) | Writing rules and dictionary. |
+| Reference                                                                                                                                                                                     | Use                                                          |
+| --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------ |
+| [ASD-STE100 Issue 9](https://www.asd-ste100.org/assets/files/ASD-STE100_ISSUE9.pdf)                                                                                                           | Writing rules and dictionary.                                |
 | [INCOSE Guide to Writing Requirements, V4 summary](https://www.incose.org/docs/default-source/working-groups/requirements-wg/guidetowritingrequirements/incose_rwg_gtwr_v4_summary_sheet.pdf) | Requirement quality, attributes, and verification structure. |
-| [VS Code configuration API](https://code.visualstudio.com/api/references/vscode-api#WorkspaceConfiguration) | Settings access and update targets. |
-| [VS Code settings](https://code.visualstudio.com/docs/configure/settings) | Workspace scope, object merging, and Settings Sync. |
-| [VS Code Quick Pick guidance](https://code.visualstudio.com/api/ux-guidelines/quick-picks) | Native color selection flow. |
-| [OKLab definition](https://bottosson.github.io/posts/oklab/) | Perceptual coordinates for the color difference heuristic. |
+| [VS Code configuration API](https://code.visualstudio.com/api/references/vscode-api#WorkspaceConfiguration)                                                                                   | Settings access and update targets.                          |
+| [VS Code settings](https://code.visualstudio.com/docs/configure/settings)                                                                                                                     | Workspace scope, object merging, and Settings Sync.          |
+| [VS Code Quick Pick guidance](https://code.visualstudio.com/api/ux-guidelines/quick-picks)                                                                                                    | Native color selection flow.                                 |
+| [OKLab definition](https://bottosson.github.io/posts/oklab/)                                                                                                                                  | Perceptual coordinates for the color difference heuristic.   |

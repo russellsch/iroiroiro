@@ -1,0 +1,71 @@
+name: Release VSIX
+
+on:
+    release:
+        types: [published]
+
+permissions:
+    contents: read
+
+concurrency:
+    group: release-${{ github.event.release.id }}
+    cancel-in-progress: false
+
+jobs:
+    release:
+        runs-on: ubuntu-24.04
+        timeout-minutes: 20
+        permissions:
+            contents: write
+        defaults:
+            run:
+                shell: bash
+        steps:
+            - name: Check out the release commit
+              uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+              with:
+                  ref: ${{ github.sha }}
+                  persist-credentials: false
+
+            - name: Set up Node.js
+              uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
+              with:
+                  node-version: "24"
+                  package-manager-cache: false
+
+            - name: Check the release version
+              id: version
+              env:
+                  RELEASE_TAG: ${{ github.event.release.tag_name }}
+              run: |
+                  version="$(node -p "JSON.parse(require('node:fs').readFileSync('package.json', 'utf8')).version")"
+                  if [[ "$RELEASE_TAG" != "v$version" ]]; then
+                    printf 'Release tag must be v<package.json version>; received %s for version %s.\n' "$RELEASE_TAG" "$version" >&2
+                    exit 1
+                  fi
+                  printf 'vsix=iroiro-iro-%s.vsix\n' "$version" >> "$GITHUB_OUTPUT"
+
+            - name: Install the locked build tools
+              run: npm ci --ignore-scripts
+
+            - name: Check, test, and package
+              run: npm run package
+
+            - name: Check the package checksum
+              working-directory: artifacts
+              run: sha256sum --check SHA256SUMS
+
+            - name: Attach and verify the release assets
+              env:
+                  GH_TOKEN: ${{ github.token }}
+                  RELEASE_TAG: ${{ github.event.release.tag_name }}
+                  VSIX_NAME: ${{ steps.version.outputs.vsix }}
+              run: |
+                  gh release upload "$RELEASE_TAG" "artifacts/$VSIX_NAME" artifacts/SHA256SUMS \
+                    --repo "$GITHUB_REPOSITORY" --clobber
+                  download_dir="$(mktemp -d "$RUNNER_TEMP/release-download.XXXXXX")"
+                  gh release download "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" \
+                    --pattern "$VSIX_NAME" --pattern SHA256SUMS --dir "$download_dir"
+                  cmp artifacts/SHA256SUMS "$download_dir/SHA256SUMS"
+                  cd "$download_dir"
+                  sha256sum --check SHA256SUMS

@@ -1,13 +1,51 @@
 # iroiro iro (色々色)
 
-iroiro iro changes colors in Visual Studio Code workspaces. Different colors help users identify each window.
+iroiro iro gives each Visual Studio Code workspace a clear color. It colors selected bars and borders, saves the choice with the workspace, and restores it when you return.
 
-These draft documents define the first release:
+Requires VS Code 1.104.0 or later on Windows, macOS, or Linux. It also runs locally in Remote SSH, WSL, and Dev Container windows. Browser clients and empty windows are outside the supported scope.
 
-- [Design](docs/design.md)
-- [Requirements](docs/requirements.md)
+## Install
 
-The documents use ASD-STE100 Issue 9 and INCOSE requirement guidance.
+Download the VSIX and `SHA256SUMS` from [GitHub Releases](https://github.com/russellsch/iroiroiro/releases), verify the checksum, and run **Extensions: Install from VSIX**. Until then, use the source-build steps in the [installation guide](docs/install.md).
 
-Implementation will add the [installation and user documents](docs/requirements.md#46-catalog-d-implementation-documents) required for release.
-The primary install path will use a VSIX from GitHub Releases. A source build path will also be documented.
+## Quick start
+
+1. Open a folder or workspace.
+2. Run **iroiro iro: Choose Color** from the Command Palette.
+3. Move through the presets to preview them. Press Enter to save or Escape to cancel.
+4. Run **iroiro iro: Choose Colored Parts** to change the affected areas.
+
+Workspace setting changes can appear in Git. **Reset Workspace Colors** restores unchanged owned values, removes the saved color, and disables automatic assignment for that workspace.
+
+## Features
+
+- **240 built-in colors.** Choose familiar names such as Red, Dark red, Light red, Green, and Plum.
+- **Custom colors and presets.** Enter a hex code such as `#aaa` or `#336699`. Save a color with a name, then rename, edit, or delete your custom presets.
+- **Random colors.** Choose a random preset or a generated color. The extension can prefer colors that differ from other participating workspace windows.
+- **Lighten and darken.** Adjust the current color from the Command Palette. Set the adjustment step in Settings.
+- **Live preview.** Preview a preset before saving it. Press Escape to cancel the preview.
+- **Saved workspace colors.** Reopen a project to restore its color. Enable automatic assignment to give new, uncolored workspaces a preset or generated color. Automatic assignment is off by default.
+- **Selected bars and borders.** Use one main color with optional bar shades and readable foreground colors.
+- **Undo and Reset.** Undo the last color change or reset the workspace colors. Later changes made by you or another extension remain in place.
+
+All color commands start with **iroiro iro:** in the Command Palette. The optional status bar item shows the saved color and opens the color picker.
+
+## What gets colored
+
+By default, the extension colors the activity bar, status bar, title bar, and the divider when you hover over it. The activity bar uses a lighter shade.
+
+Use **iroiro iro: Choose Colored Parts** to select these parts or add borders around editor groups, panels, sidebars, status bars, title bars, active tabs, and the window. Some title bars and window borders depend on your operating system and VS Code settings. See [display limitations](docs/troubleshooting.md#a-selected-part-does-not-change).
+
+## Local operation
+
+Color selection works offline. The extension has no third-party runtime packages and no update checker. In SSH, WSL, and Dev Container windows, it runs in the local VS Code UI host.
+
+## Guides
+
+- [Installation](docs/install.md)
+- [User guide](docs/user-guide.md)
+- [Settings](docs/settings.md)
+- [Troubleshooting and recovery](docs/troubleshooting.md)
+- [Changelog](CHANGELOG.md)
+
+This project uses the MIT License.

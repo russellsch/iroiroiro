@@ -1,0 +1,350 @@
+{
+    "name": "iroiro-iro",
+    "displayName": "iroiro iro",
+    "description": "Give each VS Code workspace a clear, persistent color.",
+    "icon": "iroiro-icon-256.png",
+    "homepage": "https://github.com/russellsch/iroiroiro#readme",
+    "bugs": {
+        "url": "https://github.com/russellsch/iroiroiro/issues"
+    },
+    "keywords": [
+        "workspace",
+        "window",
+        "color",
+        "presets",
+        "remote"
+    ],
+    "version": "0.1.1",
+    "publisher": "russellsch",
+    "license": "MIT",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/russellsch/iroiroiro.git"
+    },
+    "engines": {
+        "vscode": "^1.104.0"
+    },
+    "categories": [
+        "Other"
+    ],
+    "extensionKind": [
+        "ui"
+    ],
+    "capabilities": {
+        "untrustedWorkspaces": {
+            "supported": true
+        }
+    },
+    "activationEvents": [
+        "onStartupFinished"
+    ],
+    "main": "./dist/extension.js",
+    "files": [
+        "dist/**",
+        "README.md",
+        "docs/install.md",
+        "docs/user-guide.md",
+        "docs/settings.md",
+        "docs/troubleshooting.md",
+        "CHANGELOG.md",
+        "LICENSE",
+        "iroiro-icon-256.png"
+    ],
+    "contributes": {
+        "commands": [
+            {
+                "command": "iroiroIro.chooseColor",
+                "title": "Choose Color",
+                "category": "iroiro iro"
+            },
+            {
+                "command": "iroiroIro.enterHexColor",
+                "title": "Enter Hex Color",
+                "category": "iroiro iro"
+            },
+            {
+                "command": "iroiroIro.randomColor",
+                "title": "Random Color",
+                "category": "iroiro iro"
+            },
+            {
+                "command": "iroiroIro.randomPreset",
+                "title": "Random Preset",
+                "category": "iroiro iro"
+            },
+            {
+                "command": "iroiroIro.lighten",
+                "title": "Lighten",
+                "category": "iroiro iro"
+            },
+            {
+                "command": "iroiroIro.darken",
+                "title": "Darken",
+                "category": "iroiro iro"
+            },
+            {
+                "command": "iroiroIro.savePreset",
+                "title": "Save Current Color",
+                "category": "iroiro iro"
+            },
+            {
+                "command": "iroiroIro.renamePreset",
+                "title": "Rename Preset",
+                "category": "iroiro iro"
+            },
+            {
+                "command": "iroiroIro.editPreset",
+                "title": "Edit Preset Color",
+                "category": "iroiro iro"
+            },
+            {
+                "command": "iroiroIro.deletePreset",
+                "title": "Delete Preset",
+                "category": "iroiro iro"
+            },
+            {
+                "command": "iroiroIro.chooseParts",
+                "title": "Choose Colored Parts",
+                "category": "iroiro iro"
+            },
+            {
+                "command": "iroiroIro.undo",
+                "title": "Undo Color Change",
+                "category": "iroiro iro"
+            },
+            {
+                "command": "iroiroIro.reset",
+                "title": "Reset Workspace Colors",
+                "category": "iroiro iro"
+            },
+            {
+                "command": "iroiroIro.enableAutoColor",
+                "title": "Enable Automatic Color",
+                "category": "iroiro iro"
+            },
+            {
+                "command": "iroiroIro.disableAutoColor",
+                "title": "Disable Automatic Color",
+                "category": "iroiro iro"
+            },
+            {
+                "command": "iroiroIro.openSettings",
+                "title": "Open Settings",
+                "category": "iroiro iro"
+            },
+            {
+                "command": "iroiroIro.retryRecovery",
+                "title": "Retry Recovery",
+                "category": "iroiro iro"
+            }
+        ],
+        "configuration": {
+            "title": "iroiro iro",
+            "properties": {
+                "iroiroIro.color": {
+                    "type": "string",
+                    "default": "",
+                    "scope": "window",
+                    "pattern": "^\\s*(?:#?[0-9a-fA-F]{3}(?:[0-9a-fA-F]{3})?)?\\s*$",
+                    "description": "The workspace color. Commands store a canonical six-digit value at workspace scope."
+                },
+                "iroiroIro.autoColor.enabled": {
+                    "type": "boolean",
+                    "default": false,
+                    "scope": "window",
+                    "description": "Assign a color automatically to an eligible uncolored workspace."
+                },
+                "iroiroIro.autoColor.source": {
+                    "type": "string",
+                    "enum": [
+                        "presets",
+                        "generated"
+                    ],
+                    "default": "presets",
+                    "scope": "window",
+                    "description": "Select automatic colors from preset values or generated values."
+                },
+                "iroiroIro.preferDistinctColors": {
+                    "type": "boolean",
+                    "default": true,
+                    "scope": "window",
+                    "description": "Prefer random colors that differ from other participating windows."
+                },
+                "iroiroIro.adjustmentStep": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 10,
+                    "default": 5,
+                    "scope": "window",
+                    "description": "The HSL lightness percentage-point step for shade adjustments."
+                },
+                "iroiroIro.coloredParts": {
+                    "type": "object",
+                    "scope": "window",
+                    "default": {
+                        "activityBar": true,
+                        "statusBar": true,
+                        "titleBar": true,
+                        "sashHover": true,
+                        "editorGroupBorder": false,
+                        "panelBorder": false,
+                        "sideBarBorder": false,
+                        "statusBarBorder": false,
+                        "titleBarBorder": false,
+                        "tabActiveBorder": false,
+                        "windowBorder": false
+                    },
+                    "additionalProperties": false,
+                    "properties": {
+                        "activityBar": {
+                            "type": "boolean",
+                            "default": true
+                        },
+                        "statusBar": {
+                            "type": "boolean",
+                            "default": true
+                        },
+                        "titleBar": {
+                            "type": "boolean",
+                            "default": true
+                        },
+                        "sashHover": {
+                            "type": "boolean",
+                            "default": true
+                        },
+                        "editorGroupBorder": {
+                            "type": "boolean",
+                            "default": false
+                        },
+                        "panelBorder": {
+                            "type": "boolean",
+                            "default": false
+                        },
+                        "sideBarBorder": {
+                            "type": "boolean",
+                            "default": false
+                        },
+                        "statusBarBorder": {
+                            "type": "boolean",
+                            "default": false
+                        },
+                        "titleBarBorder": {
+                            "type": "boolean",
+                            "default": false
+                        },
+                        "tabActiveBorder": {
+                            "type": "boolean",
+                            "default": false
+                        },
+                        "windowBorder": {
+                            "type": "boolean",
+                            "default": false
+                        }
+                    },
+                    "description": "Select the workspace parts that receive the primary color or its configured shade."
+                },
+                "iroiroIro.adjustments": {
+                    "type": "object",
+                    "scope": "window",
+                    "default": {
+                        "activityBar": "lighten",
+                        "titleBar": "none",
+                        "statusBar": "none"
+                    },
+                    "additionalProperties": false,
+                    "properties": {
+                        "activityBar": {
+                            "type": "string",
+                            "enum": [
+                                "none",
+                                "lighten",
+                                "darken"
+                            ],
+                            "default": "lighten"
+                        },
+                        "titleBar": {
+                            "type": "string",
+                            "enum": [
+                                "none",
+                                "lighten",
+                                "darken"
+                            ],
+                            "default": "none"
+                        },
+                        "statusBar": {
+                            "type": "string",
+                            "enum": [
+                                "none",
+                                "lighten",
+                                "darken"
+                            ],
+                            "default": "none"
+                        }
+                    },
+                    "description": "Select a shade adjustment for each colored bar."
+                },
+                "iroiroIro.presets": {
+                    "type": "array",
+                    "scope": "window",
+                    "default": [],
+                    "maxItems": 1000,
+                    "items": {
+                        "type": "object",
+                        "additionalProperties": false,
+                        "required": [
+                            "name",
+                            "value"
+                        ],
+                        "properties": {
+                            "name": {
+                                "type": "string",
+                                "minLength": 1,
+                                "maxLength": 64
+                            },
+                            "value": {
+                                "type": "string",
+                                "pattern": "^#?[0-9a-fA-F]{3}(?:[0-9a-fA-F]{3})?$"
+                            }
+                        }
+                    },
+                    "description": "Named custom colors stored in user settings."
+                },
+                "iroiroIro.preview.enabled": {
+                    "type": "boolean",
+                    "default": true,
+                    "scope": "window",
+                    "description": "Show a temporary workspace preview while choosing a color."
+                },
+                "iroiroIro.statusBarItem.enabled": {
+                    "type": "boolean",
+                    "default": true,
+                    "scope": "window",
+                    "description": "Show the committed workspace color in the status bar."
+                }
+            }
+        }
+    },
+    "scripts": {
+        "check": "tsc -p tsconfig.check.json --noEmit && npm run lint && npm run format:check && node scripts/verify-project.mjs && npm run docs:check",
+        "lint": "eslint . --max-warnings 0 --report-unused-disable-directives --report-unused-inline-configs error",
+        "lint:fix": "eslint . --fix --max-warnings 0 --report-unused-disable-directives --report-unused-inline-configs error",
+        "format:check": "prettier --check .",
+        "format": "prettier --write .",
+        "test": "node scripts/run-unit-tests.mjs",
+        "docs:check": "node scripts/docs-check.mjs",
+        "build": "node scripts/build.mjs",
+        "test:integration": "node scripts/integration-runner.mjs",
+        "package": "node scripts/package.mjs"
+    },
+    "devDependencies": {
+        "@eslint/js": "10.0.1",
+        "@types/node": "24.13.3",
+        "@types/vscode": "1.104.0",
+        "@vscode/vsce": "3.9.2",
+        "eslint": "10.10.0",
+        "eslint-config-prettier": "10.1.8",
+        "prettier": "3.9.6",
+        "typescript": "6.0.3",
+        "typescript-eslint": "8.69.0"
+    }
+}

@@ -1,0 +1,9 @@
+node_modules/
+dist/
+.test-dist/
+artifacts/
+coverage/
+.cache/
+*.vsix
+package-lock.json
+src/generated/
